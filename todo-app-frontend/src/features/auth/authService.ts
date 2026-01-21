@@ -1,9 +1,8 @@
 import axiosInstance from '../../config/axios';
+import { API_ENDPOINTS } from '../../config/api';
 import type { User, LoginData, RegisterData } from '../../types';
 
-// Use absolute URL - CORS is now properly configured on backend
-// Match the port with your backend server (check your .env PORT)
-const API_URL = 'http://localhost:8003/api/auth';
+const API_URL = API_ENDPOINTS.AUTH;
 
 // Register user
 const register = async (userData: RegisterData): Promise<User> => {

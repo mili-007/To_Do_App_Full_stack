@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/database');
+const fs = require('fs');
+// console.log(fs,"fs====>###")
 
 // Load env vars
 dotenv.config();

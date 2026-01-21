@@ -1,7 +1,8 @@
 import axiosInstance from '../../config/axios';
+import { API_ENDPOINTS } from '../../config/api';
 import type { Category, CategoryFormData } from '../../types';
 
-const API_URL = 'http://localhost:8003/api/categories';
+const API_URL = API_ENDPOINTS.CATEGORIES;
 
 // Get all categories
 const getCategories = async (): Promise<Category[]> => {

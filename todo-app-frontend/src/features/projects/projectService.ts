@@ -1,7 +1,8 @@
 import axiosInstance from '../../config/axios';
+import { API_ENDPOINTS } from '../../config/api';
 import type { Project, ProjectFormData } from '../../types';
 
-const API_URL = 'http://localhost:8003/api/projects';
+const API_URL = API_ENDPOINTS.PROJECTS;
 
 // Get all projects
 const getProjects = async (): Promise<Project[]> => {

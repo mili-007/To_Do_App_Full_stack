@@ -72,7 +72,7 @@ const TodoForm = () => {
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Add New Todo</h2>
         <p className="text-sm text-gray-500">Create a new task to stay organized</p>
       </div>
-      <form onSubmit={onSubmit} className="space-y-5">
+      <form onSubmit={onSubmit} className="space-y-5" noValidate>
         <div>
           <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="title">
             Title <span className="text-red-500">*</span>

@@ -1,5 +1,8 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const { getPrisma } = require('../config/prisma');
+const { toMongoLikeUser } = require('../utils/mongoLike');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -18,14 +21,18 @@ const generateToken = (id) => {
 // @access  Public
 const registerUser = async (req, res) => {
   try {
-    // Check if database is connected
-    const mongoose = require('mongoose');
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(500).json({ 
-        message: 'Database connection error',
-        error: 'Database is not connected. Please check your MONGODB_URI and ensure MongoDB is running.'
-      });
-    }
+    const DB_PROVIDER = (process.env.DB_PROVIDER || 'mongo').toLowerCase();
+
+    // -----------------------------------
+    // MongoDB (old) - kept for reference
+    // -----------------------------------
+    // const mongoose = require('mongoose');
+    // if (mongoose.connection.readyState !== 1) {
+    //   return res.status(500).json({
+    //     message: 'Database connection error',
+    //     error: 'Database is not connected. Please check your MONGODB_URI and ensure MongoDB is running.'
+    //   });
+    // }
 
     // Log request body for debugging
     console.log('Registration request body:', { 
@@ -41,18 +48,40 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: 'Please provide all fields' });
     }
 
-    // Check if user exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
+    const normalizedEmail = String(email).trim().toLowerCase();
 
-    // Create user
-    const user = await User.create({
-      name,
-      email,
-      password
-    });
+    let user;
+    if (DB_PROVIDER === 'postgres') {
+      const prisma = getPrisma();
+
+      const userExists = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+      if (userExists) {
+        return res.status(400).json({ message: 'User already exists' });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+      user = await prisma.user.create({
+        data: {
+          name: String(name).trim(),
+          email: normalizedEmail,
+          password: hashedPassword,
+        },
+        select: { id: true, name: true, email: true, createdAt: true, updatedAt: true },
+      });
+      user = toMongoLikeUser(user);
+    } else {
+      // Default: MongoDB
+      const userExists = await User.findOne({ email: normalizedEmail });
+      if (userExists) {
+        return res.status(400).json({ message: 'User already exists' });
+      }
+
+      user = await User.create({
+        name,
+        email: normalizedEmail,
+        password,
+      });
+    }
 
     if (user) {
       res.status(201).json({
@@ -73,6 +102,9 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ message: error.message });
     }
     if (error.code === 11000) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+    if (error.code === 'P2002') {
       return res.status(400).json({ message: 'User already exists' });
     }
     if (error.name === 'JWTSecretError') {
@@ -107,16 +139,39 @@ const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Check for user email
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
+    const DB_PROVIDER = (process.env.DB_PROVIDER || 'mongo').toLowerCase();
+    const normalizedEmail = String(email || '').trim().toLowerCase();
 
-    // Check password
-    const isPasswordMatch = await user.comparePassword(password);
-    if (!isPasswordMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+    let user;
+    let isPasswordMatch = false;
+
+    if (DB_PROVIDER === 'postgres') {
+      const prisma = getPrisma();
+      const dbUser = await prisma.user.findUnique({
+        where: { email: normalizedEmail },
+        select: { id: true, name: true, email: true, password: true, createdAt: true, updatedAt: true },
+      });
+      if (!dbUser) {
+        return res.status(400).json({ message: 'Invalid credentials' });
+      }
+      isPasswordMatch = await bcrypt.compare(password, dbUser.password);
+      if (!isPasswordMatch) {
+        return res.status(400).json({ message: 'Invalid credentials' });
+      }
+      // strip password before sending
+      // eslint-disable-next-line no-unused-vars
+      const { password: _pw, ...safeUser } = dbUser;
+      user = toMongoLikeUser(safeUser);
+    } else {
+      // Default: MongoDB
+      user = await User.findOne({ email: normalizedEmail });
+      if (!user) {
+        return res.status(400).json({ message: 'Invalid credentials' });
+      }
+      isPasswordMatch = await user.comparePassword(password);
+      if (!isPasswordMatch) {
+        return res.status(400).json({ message: 'Invalid credentials' });
+      }
     }
 
     res.json({
@@ -155,8 +210,25 @@ const loginUser = async (req, res) => {
 // @access  Private
 const getUserProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('-password');
-    res.json(user);
+    const DB_PROVIDER = (process.env.DB_PROVIDER || 'mongo').toLowerCase();
+
+    // -----------------------------------
+    // MongoDB (old) - kept for reference
+    // -----------------------------------
+    // const user = await User.findById(req.user._id).select('-password');
+    // res.json(user);
+
+    if (DB_PROVIDER === 'postgres') {
+      const prisma = getPrisma();
+      const user = await prisma.user.findUnique({
+        where: { id: req.user._id },
+        select: { id: true, name: true, email: true, createdAt: true, updatedAt: true },
+      });
+      res.json(toMongoLikeUser(user));
+    } else {
+      const user = await User.findById(req.user._id).select('-password');
+      res.json(user);
+    }
   } catch (error) {
     console.error('Get Profile Error:', error);
     console.error('Error Stack:', error.stack);

@@ -2,15 +2,20 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const connectDB = require('./config/database');
-const fs = require('fs');
-// console.log(fs,"fs====>###")
+const { connectPrisma } = require('./config/prisma');
 
 // Load env vars
 dotenv.config();
 
 // Validate required environment variables
-const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET'];
-const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+// NOTE:
+// - MongoDB env requirements are preserved (commented block below) so old setup remains visible.
+// - New Postgres/Prisma uses DATABASE_URL.
+const DB_PROVIDER = (process.env.DB_PROVIDER || 'mongo').toLowerCase(); // 'mongo' | 'postgres'
+const requiredEnvVars = DB_PROVIDER === 'postgres'
+  ? ['DATABASE_URL', 'JWT_SECRET']
+  : ['MONGODB_URI', 'JWT_SECRET'];
+const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 
 if (missingEnvVars.length > 0) {
   console.error('❌ Missing required environment variables:');
@@ -18,10 +23,14 @@ if (missingEnvVars.length > 0) {
     console.error(`   - ${varName}`);
   });
   console.error('\n⚠️  Please create a .env file in the root directory with the following:');
-  console.error('   MONGODB_URI=your-mongodb-connection-string');
+  // MongoDB (old)
+  // console.error('   MONGODB_URI=your-mongodb-connection-string');
+  // Postgres (new)
+  console.error('   DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DB?schema=public');
   console.error('   JWT_SECRET=your-secret-key-here');
   console.error('   PORT=5000 (optional)');
   console.error('   NODE_ENV=development (optional)');
+  console.error('   DB_PROVIDER=mongo OR postgres (optional; defaults to mongo)');
   console.error('\n⚠️  Server will start but API calls will fail until these are configured.\n');
 }
 
@@ -64,15 +73,38 @@ app.use((req, res, next) => {
 
 // Connect to database (after CORS setup)
 let dbConnected = false;
-connectDB()
+
+// ----------------------------
+// MongoDB (old) - kept for reference
+// ----------------------------
+// connectDB()
+//   .then(() => {
+//     dbConnected = true;
+//     console.log('✅ Database connection established');
+//   })
+//   .catch(err => {
+//     console.error('❌ Database connection failed:', err.message);
+//     console.log('⚠️  Server will continue but API calls requiring database will fail');
+//     console.log('⚠️  Please check your MONGODB_URI and ensure MongoDB is accessible');
+//     dbConnected = false;
+//   });
+
+// ----------------------------
+// Database selection (new)
+// ----------------------------
+(DB_PROVIDER === 'postgres' ? connectPrisma() : connectDB())
   .then(() => {
     dbConnected = true;
-    console.log('✅ Database connection established');
+    console.log(`✅ Database connection established (${DB_PROVIDER})`);
   })
-  .catch(err => {
+  .catch((err) => {
     console.error('❌ Database connection failed:', err.message);
     console.log('⚠️  Server will continue but API calls requiring database will fail');
-    console.log('⚠️  Please check your MONGODB_URI and ensure MongoDB is accessible');
+    if (DB_PROVIDER === 'postgres') {
+      console.log('⚠️  Please check your DATABASE_URL and ensure Postgres is accessible');
+    } else {
+      console.log('⚠️  Please check your MONGODB_URI and ensure MongoDB is accessible');
+    }
     dbConnected = false;
   });
 

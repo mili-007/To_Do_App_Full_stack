@@ -3,7 +3,15 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { register, reset } from '../../features/auth/authSlice';
+import { validatePasswordStrength } from '../../utils/passwordValidation';
 import type { RootState, AppDispatch } from '../../app/store';
+
+const MIN_LEN = 8;
+const hasMinLength = (p: string) => p.length >= MIN_LEN;
+const hasUpperCase = (p: string) => /[A-Z]/.test(p);
+const hasLowerCase = (p: string) => /[a-z]/.test(p);
+const hasNumber = (p: string) => /\d/.test(p);
+const hasSpecial = (p: string) => /[!@#$%^&*()_+\-=[\]{}|;':",./<>?\\`~]/.test(p);
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -43,18 +51,25 @@ const Register = () => {
   
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
+    const pwdValidation = validatePasswordStrength(password);
+    if (!pwdValidation.valid) {
+      alert(`Password must be strong: ${pwdValidation.message}`);
+      return;
+    }
+
     if (password !== confirmPassword) {
       alert('Passwords do not match');
-    } else {
-      const userData = {
-        name,
-        email,
-        password
-      };
-      
-      dispatch(register(userData));
+      return;
     }
+
+    const userData = {
+      name,
+      email,
+      password
+    };
+
+    dispatch(register(userData));
   };
   
   return (
@@ -114,11 +129,20 @@ const Register = () => {
                   name="password"
                   type="password"
                   required
+                  minLength={MIN_LEN}
                   className="input-field"
-                  placeholder="Create a password"
+                  placeholder="Create a strong password"
                   value={password}
                   onChange={onChange}
                 />
+                <p className="text-xs text-gray-500 mt-1.5 mb-1">Strong password requirements:</p>
+                <ul className="text-xs text-gray-600 space-y-0.5 list-none">
+                  <li className={hasMinLength(password) ? 'text-green-600' : ''}>{hasMinLength(password) ? '✓' : '○'} At least 8 characters</li>
+                  <li className={hasUpperCase(password) ? 'text-green-600' : ''}>{hasUpperCase(password) ? '✓' : '○'} One uppercase letter</li>
+                  <li className={hasLowerCase(password) ? 'text-green-600' : ''}>{hasLowerCase(password) ? '✓' : '○'} One lowercase letter</li>
+                  <li className={hasNumber(password) ? 'text-green-600' : ''}>{hasNumber(password) ? '✓' : '○'} One number</li>
+                  <li className={hasSpecial(password) ? 'text-green-600' : ''}>{hasSpecial(password) ? '✓' : '○'} One special character (!@#$%^&* etc.)</li>
+                </ul>
               </div>
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-semibold text-gray-700 mb-2">

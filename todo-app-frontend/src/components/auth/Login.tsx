@@ -2,6 +2,7 @@ import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { login, reset } from '../../features/auth/authSlice';
+import { validatePasswordForLogin } from '../../utils/passwordValidation';
 import type { RootState, AppDispatch } from '../../app/store';
 
 const Login = () => {
@@ -40,12 +41,18 @@ const Login = () => {
   
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
+    const pwdCheck = validatePasswordForLogin(password);
+    if (!pwdCheck.valid) {
+      alert(pwdCheck.message);
+      return;
+    }
+
     const userData = {
       email,
       password
     };
-    
+
     dispatch(login(userData));
   };
   

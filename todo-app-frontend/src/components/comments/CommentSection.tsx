@@ -11,10 +11,11 @@ interface CommentSectionProps {
 const CommentSection = ({ todoId }: CommentSectionProps) => {
   const [showComments, setShowComments] = useState(false);
   const [commentContent, setCommentContent] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   const comments = useSelector((state: RootState) => state.comments.comments[todoId] || []);
-  const { isLoading } = useSelector((state: RootState) => state.comments);
+  const { isLoading, isError: apiError, message: apiMessage } = useSelector((state: RootState) => state.comments);
 
   useEffect(() => {
     if (showComments && comments.length === 0) {
@@ -24,10 +25,14 @@ const CommentSection = ({ todoId }: CommentSectionProps) => {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (commentContent.trim()) {
-      dispatch(createComment({ todoId, content: commentContent.trim() }));
-      setCommentContent('');
+    const trimmed = commentContent.trim();
+    if (!trimmed) {
+      setError('Comment is required');
+      return;
     }
+    setError(null);
+    dispatch(createComment({ todoId, content: trimmed }));
+    setCommentContent('');
   };
 
   const handleDelete = (commentId: string) => {
@@ -50,21 +55,38 @@ const CommentSection = ({ todoId }: CommentSectionProps) => {
 
       {showComments && (
         <div className="mt-4 space-y-4">
-          <form onSubmit={handleSubmit} className="flex space-x-2">
-            <input
-              type="text"
-              value={commentContent}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => setCommentContent(e.target.value)}
-              placeholder="Add a comment..."
-              className="flex-1 input-field text-sm"
-            />
-            <button
-              type="submit"
-              disabled={isLoading || !commentContent.trim()}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
-            >
-              Post
-            </button>
+          {apiError && apiMessage && (
+            <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm" role="alert">
+              {apiMessage}
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-1">
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                value={commentContent}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  setCommentContent(e.target.value);
+                  if (error) setError(null);
+                }}
+                placeholder="Add a comment..."
+                className={`flex-1 input-field text-sm ${error ? 'border-red-500 focus:ring-red-500' : ''}`}
+                aria-invalid={!!error}
+                aria-describedby={error ? 'comment-error' : undefined}
+              />
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+              >
+                Post
+              </button>
+            </div>
+            {error && (
+              <p id="comment-error" className="text-sm text-red-600" role="alert">
+                {error}
+              </p>
+            )}
           </form>
 
           <div className="space-y-3 max-h-64 overflow-y-auto">

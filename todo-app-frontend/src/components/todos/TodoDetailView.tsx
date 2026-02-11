@@ -21,7 +21,7 @@ const TodoDetailView = ({ todo, onUpdate, onDelete, isOwner }: TodoDetailViewPro
     priority: todo.priority,
     dueDate: todo.dueDate ? todo.dueDate.split('T')[0] : '',
     completed: todo.completed,
-    project: typeof todo.project === 'object' ? todo.project._id : todo.project || null,
+    project: typeof todo.project === 'object' ? todo?.project?._id : todo.project || null,
     categories: Array.isArray(todo.categories)
       ? todo.categories.map(cat => typeof cat === 'object' ? cat._id : cat)
       : []
@@ -107,7 +107,7 @@ const TodoDetailView = ({ todo, onUpdate, onDelete, isOwner }: TodoDetailViewPro
               }}
             >
               <option value="">No Project</option>
-              {projects.map((proj) => (
+              {projects?.map((proj) => (
                 <option key={proj._id} value={proj._id}>
                   {proj.name}
                 </option>
@@ -118,7 +118,7 @@ const TodoDetailView = ({ todo, onUpdate, onDelete, isOwner }: TodoDetailViewPro
             <div>
               <label className="block text-gray-700 text-sm font-semibold mb-2">Categories</label>
               <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg bg-gray-50">
-                {availableCategories.map((cat) => (
+                {availableCategories?.map((cat) => (
                   <button
                     key={cat._id}
                     type="button"

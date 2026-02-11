@@ -7,13 +7,18 @@ interface ProjectFormProps {
 
 const ProjectForm = ({ onSubmit, isLoading }: ProjectFormProps) => {
   const [formData, setFormData] = useState({ name: '', description: '', color: '#3B82F6' });
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (formData.name.trim()) {
-      onSubmit(formData);
-      setFormData({ name: '', description: '', color: '#3B82F6' });
+    const trimmedName = formData.name.trim();
+    if (!trimmedName) {
+      setError('Project name is required');
+      return;
     }
+    setError(null);
+    onSubmit({ ...formData, name: trimmedName });
+    setFormData({ name: '', description: '', color: '#3B82F6' });
   };
 
   return (
@@ -27,11 +32,20 @@ const ProjectForm = ({ onSubmit, isLoading }: ProjectFormProps) => {
           <input
             type="text"
             value={formData.name}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            className="input-field"
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              setFormData(prev => ({ ...prev, name: e.target.value }));
+              if (error) setError(null);
+            }}
+            className={`input-field ${error ? 'border-red-500 focus:ring-red-500' : ''}`}
             placeholder="Enter project name"
-            required
+            aria-invalid={!!error}
+            aria-describedby={error ? 'project-name-error' : undefined}
           />
+          {error && (
+            <p id="project-name-error" className="mt-1 text-sm text-red-600" role="alert">
+              {error}
+            </p>
+          )}
         </div>
         <div>
           <label className="block text-gray-700 text-sm font-semibold mb-2">

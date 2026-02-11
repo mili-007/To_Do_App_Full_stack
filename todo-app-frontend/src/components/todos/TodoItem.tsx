@@ -7,21 +7,32 @@ import { getCategories } from '../../features/categories/categorySlice';
 import type { AppDispatch, RootState } from '../../app/store';
 import type { Todo, TodoFormData } from '../../types';
 
+/** Today in local YYYY-MM-DD for due date min (no past dates). */
+const getTodayMinDate = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 interface TodoItemProps {
   todo: Todo;
 }
 
+type EditFormErrors = Partial<Record<'title' | 'dueDate', string>>;
+
 const TodoItem = ({ todo }: TodoItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [editErrors, setEditErrors] = useState<EditFormErrors>({});
+  const dueDateStr = todo.dueDate ? todo.dueDate.split('T')[0] : '';
+  const isPastDue = dueDateStr && dueDateStr < getTodayMinDate();
   const [editData, setEditData] = useState<Omit<TodoFormData, 'description'> & { description: string; completed: boolean; project?: string | null; categories?: string[] }>({
     title: todo.title,
     description: todo.description || '',
     priority: todo.priority,
-    dueDate: todo.dueDate ? todo.dueDate.split('T')[0] : '',
+    dueDate: isPastDue ? '' : dueDateStr,
     completed: todo.completed,
-    project: typeof todo.project === 'object' ? todo.project._id : todo.project || null,
-    categories: Array.isArray(todo.categories) 
-      ? todo.categories.map(cat => typeof cat === 'object' ? cat._id : cat)
+    project: todo.project != null && typeof todo.project === 'object' ? todo.project._id : (typeof todo.project === 'string' ? todo.project : null),
+    categories: Array.isArray(todo.categories)
+      ? todo.categories.map(cat => (cat != null && typeof cat === 'object' ? cat._id : cat)).filter(Boolean)
       : []
   });
   
@@ -42,6 +53,13 @@ const TodoItem = ({ todo }: TodoItemProps) => {
   };
   
   const handleUpdate = () => {
+    const err: EditFormErrors = {};
+    if (!editData.title.trim()) err.title = 'Title is required';
+    if (editData.dueDate && editData.dueDate < getTodayMinDate()) {
+      err.dueDate = 'Due date cannot be in the past. Please select today or a future date.';
+    }
+    setEditErrors(err);
+    if (Object.keys(err).length > 0) return;
     dispatch(updateTodo({ id: todo._id, todoData: editData }));
     setIsEditing(false);
   };
@@ -60,24 +78,31 @@ const TodoItem = ({ todo }: TodoItemProps) => {
   };
   
   const onChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setEditData((prevState) => ({
-      ...prevState,
-      [e.target.name]: e.target.value
-    }));
+    const { name, value } = e.target;
+    setEditData((prevState) => ({ ...prevState, [name]: value }));
+    if (editErrors[name as keyof EditFormErrors]) {
+      setEditErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
   
   return (
     <div className={`card transition-all duration-200 ${todo.completed ? 'bg-gray-50 border-gray-200 opacity-75' : 'bg-white border-gray-200 hover:border-indigo-300'}`}>
       {isEditing ? (
         <div className="space-y-4">
-          <input
-            className="input-field"
-            type="text"
-            name="title"
-            value={editData.title}
-            onChange={onChange}
-            placeholder="Todo title"
-          />
+          <div>
+            <input
+              className={`input-field ${editErrors.title ? 'border-red-500 focus:ring-red-500' : ''}`}
+              type="text"
+              name="title"
+              value={editData.title}
+              onChange={onChange}
+              placeholder="Todo title"
+              aria-invalid={!!editErrors.title}
+            />
+            {editErrors.title && (
+              <p className="mt-1 text-sm text-red-600" role="alert">{editErrors.title}</p>
+            )}
+          </div>
           <textarea
             className="input-field resize-none"
             name="description"
@@ -98,12 +123,18 @@ const TodoItem = ({ todo }: TodoItemProps) => {
               <option value="high">High</option>
             </select>
             <input
-              className="input-field"
+              className={`input-field ${editErrors.dueDate ? 'border-red-500 focus:ring-red-500' : ''}`}
               type="date"
               name="dueDate"
               value={editData.dueDate}
+              min={getTodayMinDate()}
               onChange={onChange}
+              title="Select today or a future date"
+              aria-invalid={!!editErrors.dueDate}
             />
+            {editErrors.dueDate && (
+              <p className="mt-1 text-sm text-red-600" role="alert">{editErrors.dueDate}</p>
+            )}
           </div>
           {isOwner && (
             <>
@@ -207,17 +238,19 @@ const TodoItem = ({ todo }: TodoItemProps) => {
                   )}
                   {todo.categories && todo.categories.length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      {todo.categories.map((cat) => (
-                        <span
-                          key={typeof cat === 'object' ? cat._id : cat}
-                          className="text-xs px-2 py-1 rounded-full text-white font-medium"
-                          style={{ 
-                            backgroundColor: typeof cat === 'object' ? cat.color : '#10B981' 
-                          }}
-                        >
-                          {typeof cat === 'object' ? cat.name : 'Category'}
-                        </span>
-                      ))}
+                      {todo.categories
+                        .filter((cat): cat is NonNullable<typeof cat> => cat != null)
+                        .map((cat) => (
+                          <span
+                            key={typeof cat === 'object' ? cat._id : cat}
+                            className="text-xs px-2 py-1 rounded-full text-white font-medium"
+                            style={{
+                              backgroundColor: typeof cat === 'object' ? cat.color : '#10B981'
+                            }}
+                          >
+                            {typeof cat === 'object' ? cat.name : 'Category'}
+                          </span>
+                        ))}
                     </div>
                   )}
                   {todo.sharedWith && todo.sharedWith.length > 0 && (

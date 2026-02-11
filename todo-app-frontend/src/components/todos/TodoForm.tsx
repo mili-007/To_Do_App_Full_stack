@@ -6,6 +6,14 @@ import { getCategories } from '../../features/categories/categorySlice';
 import type { AppDispatch, RootState } from '../../app/store';
 import type { TodoFormData } from '../../types';
 
+/** Today in local date for min attribute (YYYY-MM-DD). User cannot pick a past due date. */
+const getTodayMinDate = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+type FormErrors = Partial<Record<'title' | 'dueDate', string>>;
+
 const TodoForm = () => {
   const [formData, setFormData] = useState<TodoFormData>({
     title: '',
@@ -16,12 +24,14 @@ const TodoForm = () => {
     categories: [],
     sharedWith: []
   });
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const { title, description, priority, dueDate, project, categories } = formData;
   
   const dispatch = useDispatch<AppDispatch>();
   const { projects } = useSelector((state: RootState) => state.projects);
   const { categories: availableCategories } = useSelector((state: RootState) => state.categories);
+  const { isError: createError, message: createMessage } = useSelector((state: RootState) => state.todos);
   
   useEffect(() => {
     dispatch(getProjects());
@@ -29,10 +39,11 @@ const TodoForm = () => {
   }, [dispatch]);
   
   const onChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData((prevState) => ({
-      ...prevState,
-      [e.target.name]: e.target.value
-    }));
+    const { name, value } = e.target;
+    setFormData((prevState) => ({ ...prevState, [name]: value }));
+    if (errors[name as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleCategoryToggle = (categoryId: string) => {
@@ -46,14 +57,29 @@ const TodoForm = () => {
   
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+    const newErrors: FormErrors = {};
+
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) {
+      newErrors.title = 'Title is required';
+    }
+    if (dueDate && dueDate < getTodayMinDate()) {
+      newErrors.dueDate = 'Due date cannot be in the past. Please select today or a future date.';
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
+
     const todoData: TodoFormData = {
-      title,
+      title: trimmedTitle,
       description,
       priority,
-      dueDate
+      dueDate,
+      project: project || null,
+      categories: categories ?? [],
+      sharedWith: formData.sharedWith ?? []
     };
-    
+
     dispatch(createTodo(todoData));
     setFormData({
       title: '',
@@ -64,6 +90,7 @@ const TodoForm = () => {
       categories: [],
       sharedWith: []
     });
+    setErrors({});
   };
   
   return (
@@ -72,21 +99,32 @@ const TodoForm = () => {
         <h2 className="text-2xl font-bold text-gray-800 mb-2">Add New Todo</h2>
         <p className="text-sm text-gray-500">Create a new task to stay organized</p>
       </div>
+      {createError && createMessage && (
+        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm" role="alert">
+          {createMessage}
+        </div>
+      )}
       <form onSubmit={onSubmit} className="space-y-5" noValidate>
         <div>
           <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="title">
             Title <span className="text-red-500">*</span>
           </label>
           <input
-            className="input-field"
+            className={`input-field ${errors.title ? 'border-red-500 focus:ring-red-500' : ''}`}
             id="title"
             type="text"
             name="title"
             value={title}
             onChange={onChange}
-            required
             placeholder="Enter todo title"
+            aria-invalid={!!errors.title}
+            aria-describedby={errors.title ? 'title-error' : undefined}
           />
+          {errors.title && (
+            <p id="title-error" className="mt-1 text-sm text-red-600" role="alert">
+              {errors.title}
+            </p>
+          )}
         </div>
         
         <div>
@@ -127,13 +165,22 @@ const TodoForm = () => {
               Due Date
             </label>
             <input
-              className="input-field"
+              className={`input-field ${errors.dueDate ? 'border-red-500 focus:ring-red-500' : ''}`}
               id="dueDate"
               type="date"
               name="dueDate"
               value={dueDate}
+              min={getTodayMinDate()}
               onChange={onChange}
+              title="Select today or a future date"
+              aria-invalid={!!errors.dueDate}
+              aria-describedby={errors.dueDate ? 'dueDate-error' : undefined}
             />
+            {errors.dueDate && (
+              <p id="dueDate-error" className="mt-1 text-sm text-red-600" role="alert">
+                {errors.dueDate}
+              </p>
+            )}
           </div>
         </div>
 

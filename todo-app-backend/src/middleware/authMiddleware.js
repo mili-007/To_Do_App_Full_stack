@@ -1,7 +1,5 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { getPrisma } = require('../config/prisma');
-const { toMongoLikeUser } = require('../utils/mongoLike');
 
 const protect = async (req, res, next) => {
   let token;
@@ -23,27 +21,8 @@ const protect = async (req, res, next) => {
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      const DB_PROVIDER = (process.env.DB_PROVIDER || 'mongo').toLowerCase();
-
-      // -----------------------------------
-      // MongoDB (old) - kept for reference
-      // -----------------------------------
-      // req.user = await User.findById(decoded.id).select('-password');
-
-      // -----------------------------------
-      // PostgreSQL + Prisma (new)
-      // -----------------------------------
-      if (DB_PROVIDER === 'postgres') {
-        const prisma = getPrisma();
-        const user = await prisma.user.findUnique({
-          where: { id: decoded.id },
-          select: { id: true, name: true, email: true, createdAt: true, updatedAt: true },
-        });
-        req.user = toMongoLikeUser(user);
-      } else {
-        // Default: MongoDB
-        req.user = await User.findById(decoded.id).select('-password');
-      }
+      // Get user from token
+      req.user = await User.findById(decoded.id).select('-password');
 
       if (!req.user) {
         return res.status(401).json({ message: 'User not found' });

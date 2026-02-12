@@ -14,9 +14,7 @@ const generateToken = (id) => {
   });
 };
 
-// @desc    Register user
-// @route   POST /api/auth/register
-// @access  Public
+// Register user
 const registerUser = async (req, res) => {
   try {
     // Check if database is connected
@@ -28,12 +26,12 @@ const registerUser = async (req, res) => {
       });
     }
 
-    // Log request body for debugging
-    console.log('Registration request body:', { 
-      name: req.body?.name ? 'provided' : 'missing',
-      email: req.body?.email ? 'provided' : 'missing',
-      password: req.body?.password ? 'provided' : 'missing'
-    });
+  
+    // console.log('Registration request body:', { 
+    //   name: req.body?.name ? 'provided' : 'missing',
+    //   email: req.body?.email ? 'provided' : 'missing',
+    //   password: req.body?.password ? 'provided' : 'missing'
+    // });
 
     const { name, email, password } = req.body;
 
@@ -105,26 +103,34 @@ const registerUser = async (req, res) => {
   }
 };
 
-// @desc    Login user
-// @route   POST /api/auth/login
-// @access  Public
+// Login user
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const body = req.body || {};
+    const emailVal = typeof body.email === 'string' ? body.email.trim() : '';
+    const passwordVal = typeof body.password === 'string' ? body.password : '';
 
-    const loginPasswordCheck = validatePasswordForLogin(password);
+    const missing = [];
+    if (!emailVal) missing.push('email');
+    if (!passwordVal) missing.push('password');
+    if (missing.length > 0) {
+      const message = missing.length === 2
+        ? 'Email and password are required'
+        : `${missing[0].charAt(0).toUpperCase() + missing[0].slice(1)} is required`;
+      return res.status(400).json({ message });
+    }
+
+    const loginPasswordCheck = validatePasswordForLogin(passwordVal);
     if (!loginPasswordCheck.valid) {
       return res.status(400).json({ message: loginPasswordCheck.message });
     }
 
-    // Check for user email
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: emailVal });
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Check password
-    const isPasswordMatch = await user.comparePassword(password);
+    const isPasswordMatch = await user.comparePassword(passwordVal);
     if (!isPasswordMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -159,9 +165,7 @@ const loginUser = async (req, res) => {
   }
 };
 
-// @desc    Get user profile
-// @route   GET /api/auth/profile
-// @access  Private
+// Get user profile
 const getUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password');

@@ -1,13 +1,13 @@
 const Todo = require('../models/Todo');
 
-/** Get start of today (local date only, time 00:00:00) for due-date validation. */
+//  Get start of current date
 function getStartOfToday() {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
   return d;
 }
 
-/** Return true if the given due date (Date or ISO/YYYY-MM-DD string) is before today. */
+// Return true if the given due date 
 function isDueDateInPast(dueDate) {
   if (dueDate == null || dueDate === '') return false;
   const d = dueDate instanceof Date ? dueDate : new Date(dueDate);
@@ -17,9 +17,7 @@ function isDueDateInPast(dueDate) {
   return d.getTime() < today.getTime();
 }
 
-// @desc    Get all todos for a user (including shared todos)
-// @route   GET /api/todos
-// @access  Private
+// Get all todos for a user (including shared todos)
 const getTodos = async (req, res) => {
   try {
     const todos = await Todo.find({
@@ -41,9 +39,7 @@ const getTodos = async (req, res) => {
   }
 };
 
-// @desc    Create a todo
-// @route   POST /api/todos
-// @access  Private
+// Create a todo
 const createTodo = async (req, res) => {
   try {
     const { title, description, priority, dueDate, project, categories, sharedWith } = req.body;
@@ -81,9 +77,7 @@ const createTodo = async (req, res) => {
   }
 };
 
-// @desc    Update a todo
-// @route   PUT /api/todos/:id
-// @access  Private
+// Update a todo
 const updateTodo = async (req, res) => {
   try {
     const { title, description, completed, priority, dueDate, project, categories, sharedWith } = req.body;
@@ -144,9 +138,7 @@ const updateTodo = async (req, res) => {
   }
 };
 
-// @desc    Delete a todo
-// @route   DELETE /api/todos/:id
-// @access  Private
+// Delete a todo
 const deleteTodo = async (req, res) => {
   try {
     const todo = await Todo.findById(req.params.id);

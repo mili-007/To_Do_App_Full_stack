@@ -1,7 +1,5 @@
-/**
- * Strong password validation for signup.
- * Returns { valid: boolean, message: string }.
- */
+
+// Strong password validation for signup.
 const MIN_LENGTH = 8;
 const MAX_LENGTH = 128;
 
@@ -14,11 +12,8 @@ const RULES = {
   special: { test: (p) => /[!@#$%^&*()_+\-=[\]{}|;':",./<>?\\`~]/.test(p), message: 'At least one special character (!@#$%^&* etc.)' },
 };
 
-/**
- * Validate password strength for registration.
- * @param {string} password - Plain password
- * @returns {{ valid: boolean, message: string }}
- */
+
+//  Validate password strength for registration.
 function validatePasswordStrength(password) {
   if (typeof password !== 'string') {
     return { valid: false, message: 'Password is required' };
@@ -36,11 +31,8 @@ function validatePasswordStrength(password) {
   return { valid: true, message: '' };
 }
 
-/**
- * Basic validation for login: non-empty and reasonable length (avoid empty or huge strings).
- * @param {string} password - Plain password
- * @returns {{ valid: boolean, message: string }}
- */
+
+//  Basic validation for login: non-empty and length based.
 function validatePasswordForLogin(password) {
   if (typeof password !== 'string') {
     return { valid: false, message: 'Password is required' };

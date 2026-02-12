@@ -1,9 +1,7 @@
 const Category = require('../models/Category');
 const Todo = require('../models/Todo');
 
-// @desc    Get all categories for a user
-// @route   GET /api/categories
-// @access  Private
+// Get all categories for a user
 const getCategories = async (req, res) => {
   try {
     const categories = await Category.find({ user: req.user._id })
@@ -16,9 +14,7 @@ const getCategories = async (req, res) => {
   }
 };
 
-// @desc    Get a single category with todos (Many-to-Many relationship)
-// @route   GET /api/categories/:id
-// @access  Private
+// Get a single category with todos (Many-to-Many relationship)
 const getCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);
@@ -50,9 +46,7 @@ const getCategory = async (req, res) => {
   }
 };
 
-// @desc    Create a category
-// @route   POST /api/categories
-// @access  Private
+// Create a category
 const createCategory = async (req, res) => {
   try {
     const { name, color } = req.body;
@@ -87,9 +81,7 @@ const createCategory = async (req, res) => {
   }
 };
 
-// @desc    Update a category
-// @route   PUT /api/categories/:id
-// @access  Private
+// Update a category
 const updateCategory = async (req, res) => {
   try {
     const { name, color } = req.body;
@@ -137,9 +129,7 @@ const updateCategory = async (req, res) => {
   }
 };
 
-// @desc    Delete a category
-// @route   DELETE /api/categories/:id
-// @access  Private
+// Delete a category
 const deleteCategory = async (req, res) => {
   try {
     const category = await Category.findById(req.params.id);

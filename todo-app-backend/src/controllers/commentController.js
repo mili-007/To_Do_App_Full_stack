@@ -1,9 +1,7 @@
 const Comment = require('../models/Comment');
 const Todo = require('../models/Todo');
 
-// @desc    Get all comments for a todo
-// @route   GET /api/todos/:todoId/comments
-// @access  Private
+// Get all comments for a todo
 const getComments = async (req, res) => {
   try {
     const todo = await Todo.findById(req.params.todoId);
@@ -30,9 +28,7 @@ const getComments = async (req, res) => {
   }
 };
 
-// @desc    Create a comment
-// @route   POST /api/todos/:todoId/comments
-// @access  Private
+// Create a comment
 const createComment = async (req, res) => {
   try {
     const { content } = req.body;
@@ -70,9 +66,7 @@ const createComment = async (req, res) => {
   }
 };
 
-// @desc    Update a comment
-// @route   PUT /api/comments/:id
-// @access  Private
+// Update a comment
 const updateComment = async (req, res) => {
   try {
     const { content } = req.body;
@@ -106,9 +100,7 @@ const updateComment = async (req, res) => {
   }
 };
 
-// @desc    Delete a comment
-// @route   DELETE /api/comments/:id
-// @access  Private
+// Delete a comment
 const deleteComment = async (req, res) => {
   try {
     const comment = await Comment.findById(req.params.id);

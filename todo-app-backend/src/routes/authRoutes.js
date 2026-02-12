@@ -3,7 +3,7 @@ const router = express.Router();
 const { registerUser, loginUser, getUserProfile } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
 
-// OPTIONS is handled at app level in server.js - no need for route-level handlers
+// OPTIONS is handled at app level in server.js 
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);

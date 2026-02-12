@@ -1,9 +1,7 @@
 const Project = require('../models/Project');
 const Todo = require('../models/Todo');
 
-// @desc    Get all projects for a user
-// @route   GET /api/projects
-// @access  Private
+// Get all projects for a user
 const getProjects = async (req, res) => {
   try {
     const projects = await Project.find({ user: req.user._id })
@@ -17,9 +15,7 @@ const getProjects = async (req, res) => {
   }
 };
 
-// @desc    Get a single project with todos
-// @route   GET /api/projects/:id
-// @access  Private
+// Get a single project with todos
 const getProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id)
@@ -45,9 +41,7 @@ const getProject = async (req, res) => {
   }
 };
 
-// @desc    Create a project
-// @route   POST /api/projects
-// @access  Private
+//  Create a project
 const createProject = async (req, res) => {
   try {
     const { name, description, color } = req.body;
@@ -71,9 +65,7 @@ const createProject = async (req, res) => {
   }
 };
 
-// @desc    Update a project
-// @route   PUT /api/projects/:id
-// @access  Private
+// Update a project
 const updateProject = async (req, res) => {
   try {
     const { name, description, color } = req.body;
@@ -107,9 +99,7 @@ const updateProject = async (req, res) => {
   }
 };
 
-// @desc    Delete a project
-// @route   DELETE /api/projects/:id
-// @access  Private
+// Delete a project
 const deleteProject = async (req, res) => {
   try {
     const project = await Project.findById(req.params.id);

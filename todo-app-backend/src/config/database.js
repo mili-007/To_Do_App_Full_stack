@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require('mongoose');         ///// Connect DB using with mongoose ORM
 
 const connectDB = async () => {
   try {
@@ -10,8 +10,8 @@ const connectDB = async () => {
     }
     
     const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
+      serverSelectionTimeoutMS: 5000,          //////// Wait till MongoDB server connect. after that throw error 
+      socketTimeoutMS: 45000,                  ///// wait till query response 
     });
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     console.log(`Database: ${conn.connection.name}`);

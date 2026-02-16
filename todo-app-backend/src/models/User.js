@@ -24,7 +24,6 @@ const userSchema = new mongoose.Schema({
 });
 
 // Hash password before saving
-// Note: In Mongoose v7+, async hooks don't require the 'next' callback
 userSchema.pre('save', async function() {
   // Only hash the password if it has been modified (or is new)
   if (!this.isModified('password')) {
@@ -35,8 +34,7 @@ userSchema.pre('save', async function() {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
   } catch (error) {
-    // Re-throw the error so Mongoose can handle it
-    throw error;
+    throw error;          //////// re-throw error
   }
 });
 

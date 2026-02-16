@@ -65,7 +65,7 @@ const Login = () => {
               <span className="text-white font-bold text-2xl">✓</span>
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Welcome Back
+              Sign In
             </h2>
             <p className="text-gray-500 text-sm">
               Sign in to continue to your Todo App

@@ -207,40 +207,56 @@ const TodoDetailView = ({ todo, onUpdate, onDelete, isOwner }: TodoDetailViewPro
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 mb-6 pb-6 border-b border-gray-200">
-        <span className={`badge ${priorityColors[todo.priority]}`}>
-          {todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)} Priority
-        </span>
-        {todo.project && (
-          <Link
-            to={`/projects`}
-            className="text-sm px-3 py-1 rounded-full text-white font-medium hover:opacity-80 transition-opacity"
-            style={{ backgroundColor: typeof todo.project === 'object' ? todo.project.color : '#3B82F6' }}
-          >
-            {typeof todo.project === 'object' ? todo.project.name : 'Project'}
-          </Link>
-        )}
-        {todo.categories && todo.categories.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            {todo.categories.map((cat) => (
-              <span
-                key={typeof cat === 'object' ? cat._id : cat}
-                className="text-xs px-2 py-1 rounded-full text-white font-medium"
-                style={{ backgroundColor: typeof cat === 'object' ? cat.color : '#10B981' }}
-              >
-                {typeof cat === 'object' ? cat.name : 'Category'}
-              </span>
-            ))}
-          </div>
-        )}
-        {todo.dueDate && (
-          <span className="text-sm text-gray-500 flex items-center space-x-1">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span>Due: {new Date(todo.dueDate).toLocaleDateString()}</span>
+      <div className="space-y-4 mb-6 pb-6 border-b border-gray-200">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className={`badge ${priorityColors[todo.priority]}`}>
+            {todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)} Priority
           </span>
-        )}
+          {todo.dueDate && (
+            <span className="text-sm text-gray-500 flex items-center space-x-1">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span>Due: {new Date(todo.dueDate).toLocaleDateString()}</span>
+            </span>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-4">
+          <div>
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Project</span>
+            {todo.project ? (
+              <Link
+                to="/projects"
+                className="inline-block text-sm px-3 py-1.5 rounded-full text-white font-medium hover:opacity-80 transition-opacity"
+                style={{ backgroundColor: typeof todo.project === 'object' ? todo.project.color : '#3B82F6' }}
+              >
+                {typeof todo.project === 'object' ? todo.project.name : 'Project'}
+              </Link>
+            ) : (
+              <span className="text-sm text-gray-400">No project</span>
+            )}
+          </div>
+          <div>
+            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Categories</span>
+            {todo.categories && todo.categories.filter((c): c is NonNullable<typeof c> => c != null).length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {todo.categories
+                  .filter((cat): cat is NonNullable<typeof cat> => cat != null)
+                  .map((cat) => (
+                    <span
+                      key={typeof cat === 'object' ? cat._id : cat}
+                      className="text-xs px-2 py-1 rounded-full text-white font-medium"
+                      style={{ backgroundColor: typeof cat === 'object' ? cat.color : '#10B981' }}
+                    >
+                      {typeof cat === 'object' ? cat.name : 'Category'}
+                    </span>
+                  ))}
+              </div>
+            ) : (
+              <span className="text-sm text-gray-400">No categories</span>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

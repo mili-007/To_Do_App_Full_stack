@@ -225,34 +225,44 @@ const TodoItem = ({ todo }: TodoItemProps) => {
                   <span className={`badge ${priorityColors[todo.priority]}`}>
                     {todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)} Priority
                   </span>
-                  {todo.project && (
-                    <Link
-                      to="/projects"
-                      className="text-xs px-2 py-1 rounded-full text-white font-medium hover:opacity-80 transition-opacity"
-                      style={{ 
-                        backgroundColor: typeof todo.project === 'object' ? todo.project.color : '#3B82F6' 
-                      }}
-                    >
-                      {typeof todo.project === 'object' ? todo.project.name : 'Project'}
-                    </Link>
-                  )}
-                  {todo.categories && todo.categories.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {todo.categories
-                        .filter((cat): cat is NonNullable<typeof cat> => cat != null)
-                        .map((cat) => (
-                          <span
-                            key={typeof cat === 'object' ? cat._id : cat}
-                            className="text-xs px-2 py-1 rounded-full text-white font-medium"
-                            style={{
-                              backgroundColor: typeof cat === 'object' ? cat.color : '#10B981'
-                            }}
-                          >
-                            {typeof cat === 'object' ? cat.name : 'Category'}
-                          </span>
-                        ))}
-                    </div>
-                  )}
+                  <span className="text-xs text-gray-500">
+                    Project:{' '}
+                    {todo.project ? (
+                      <Link
+                        to="/projects"
+                        className="text-xs px-2 py-1 rounded-full text-white font-medium hover:opacity-80 transition-opacity"
+                        style={{
+                          backgroundColor: typeof todo.project === 'object' ? todo.project.color : '#3B82F6'
+                        }}
+                      >
+                        {typeof todo.project === 'object' ? todo.project.name : 'Project'}
+                      </Link>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    Categories:{' '}
+                    {todo.categories && todo.categories.filter((c): c is NonNullable<typeof c> => c != null).length > 0 ? (
+                      <span className="inline-flex flex-wrap gap-1">
+                        {todo.categories
+                          .filter((cat): cat is NonNullable<typeof cat> => cat != null)
+                          .map((cat) => (
+                            <span
+                              key={typeof cat === 'object' ? cat._id : cat}
+                              className="px-2 py-0.5 rounded-full text-white font-medium"
+                              style={{
+                                backgroundColor: typeof cat === 'object' ? cat.color : '#10B981'
+                              }}
+                            >
+                              {typeof cat === 'object' ? cat.name : 'Category'}
+                            </span>
+                          ))}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </span>
                   {todo.sharedWith && todo.sharedWith.length > 0 && (
                     <span className="text-xs text-gray-500 flex items-center space-x-1">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

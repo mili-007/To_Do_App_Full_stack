@@ -5,6 +5,7 @@ import { getProjects } from '../../features/projects/projectSlice';
 import { getCategories } from '../../features/categories/categorySlice';
 import type { AppDispatch, RootState } from '../../app/store';
 import type { Todo } from '../../types';
+import Button from '../ui/Button';
 
 interface TodoDetailViewProps {
   todo: Todo;
@@ -140,18 +141,24 @@ const TodoDetailView = ({ todo, onUpdate, onDelete, isOwner }: TodoDetailViewPro
             </div>
           )}
           <div className="flex space-x-3 pt-2">
-            <button
+            <Button
+              type="button"
+              variant="success"
+              size="sm"
               onClick={handleSave}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+              className="flex-1"
             >
               Save Changes
-            </button>
-            <button
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => setIsEditing(false)}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+              className="flex-1"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -181,28 +188,32 @@ const TodoDetailView = ({ todo, onUpdate, onDelete, isOwner }: TodoDetailViewPro
         </div>
         {isOwner && (
           <div className="flex space-x-2">
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
               onClick={() => {
                 dispatch(getProjects());
                 dispatch(getCategories());
                 setIsEditing(true);
               }}
-              className="p-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors"
               title="Edit todo"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-            </button>
-            <button
+            </Button>
+            <Button
+              type="button"
+              variant="ghostDanger"
+              size="icon"
               onClick={onDelete}
-              className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
               title="Delete todo"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
-            </button>
+            </Button>
           </div>
         )}
       </div>

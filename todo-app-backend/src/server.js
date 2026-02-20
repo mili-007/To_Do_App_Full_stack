@@ -47,15 +47,5 @@ app.use('/api/projects', require('./routes/projectRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/comments', require('./routes/commentRoutes'));
 
-app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
-  res.status(500).json({
-    message: 'Something went wrong!',
-    error: isDev ? err.message : undefined,
-    stack: isDev ? err.stack : undefined
-  });
-});
-
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

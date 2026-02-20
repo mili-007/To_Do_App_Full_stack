@@ -1,11 +1,17 @@
 import { useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { toast } from '../utils/toast';
 import { useDispatch, useSelector } from 'react-redux';
-import { getTodos, updateTodo, deleteTodo } from '../features/todos/todoSlice';
-import { getComments, createComment } from '../features/comments/commentSlice';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { AppDispatch, RootState } from '../app/store';
 import CommentSection from '../components/comments/CommentSection';
 import TodoDetailView from '../components/todos/TodoDetailView';
+import BackLink from '../components/ui/BackLink';
+import ConfirmDialog from '../components/ui/ConfirmDialog';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+import PageHeader from '../components/ui/PageHeader';
+import { getComments } from '../features/comments/commentSlice';
+import { deleteTodo, getTodos, updateTodo } from '../features/todos/todoSlice';
+import { useDeleteConfirm } from '../hooks/useDeleteConfirm';
 
 const TodoDetailPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,24 +19,17 @@ const TodoDetailPage = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { todos, isLoading } = useSelector((state: RootState) => state.todos);
   const { user } = useSelector((state: RootState) => state.auth);
+  const deleteConfirm = useDeleteConfirm<string>();
 
   const todo = todos.find(t => t._id === id);
 
   useEffect(() => {
-    if (!todo && !isLoading) {
-      dispatch(getTodos());
-    }
-    if (id) {
-      dispatch(getComments(id));
-    }
+    if (!todo && !isLoading) dispatch(getTodos());
+    if (id) dispatch(getComments(id));
   }, [id, todo, isLoading, dispatch]);
 
   if (isLoading && !todo) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   if (!todo) {
@@ -44,43 +43,47 @@ const TodoDetailPage = () => {
     );
   }
 
-  const handleUpdate = (todoData: any) => {
+  const handleUpdate = (todoData: Record<string, unknown>) => {
     dispatch(updateTodo({ id: todo._id, todoData }));
   };
 
-  const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this todo?')) {
-      dispatch(deleteTodo(todo._id));
-      navigate('/dashboard');
-    }
+  const handleDeleteConfirm = () => {
+    if (deleteConfirm.target === null) return;
+    deleteConfirm.close();
+    dispatch(deleteTodo(deleteConfirm.target))
+      .unwrap()
+      .then(() => {
+        toast.success('Todo deleted');
+        navigate('/dashboard');
+      })
+      .catch((err: string) => toast.error(err || 'Failed to delete todo'));
   };
 
-  const handleComment = (content: string) => {
-    dispatch(createComment({ todoId: todo._id, content }));
-  };
+  const isOwner =
+    typeof todo.user === 'object' ? todo.user._id === user?._id : todo.user === user?._id;
 
   return (
     <div>
+      <ConfirmDialog
+        open={deleteConfirm.isOpen}
+        title="Delete todo"
+        message="Are you sure you want to delete this todo?"
+        confirmLabel="Delete"
+        onConfirm={handleDeleteConfirm}
+        onCancel={deleteConfirm.close}
+      />
       <div className="mb-6">
-        <Link 
-          to="/dashboard" 
-          className="inline-flex items-center text-indigo-600 hover:text-indigo-800 font-medium mb-4"
-        >
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back to Todos
-        </Link>
-        <h1 className="text-3xl font-bold text-gray-800">Todo Details</h1>
+        <BackLink to="/dashboard">Back to Todos</BackLink>
+        <PageHeader title="Todo Details" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <TodoDetailView 
-            todo={todo} 
+          <TodoDetailView
+            todo={todo}
             onUpdate={handleUpdate}
-            onDelete={handleDelete}
-            isOwner={typeof todo.user === 'object' ? todo.user._id === user?._id : todo.user === user?._id}
+            onDelete={() => deleteConfirm.requestDelete(todo._id)}
+            isOwner={isOwner}
           />
           <div className="mt-6">
             <CommentSection todoId={todo._id} />
@@ -92,9 +95,11 @@ const TodoDetailPage = () => {
             <div className="space-y-3">
               <div>
                 <span className="text-sm text-gray-600">Status:</span>
-                <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
-                  todo.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                }`}>
+                <span
+                  className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                    todo.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                  }`}
+                >
                   {todo.completed ? 'Completed' : 'Pending'}
                 </span>
               </div>
@@ -121,4 +126,3 @@ const TodoDetailPage = () => {
 };
 
 export default TodoDetailPage;
-

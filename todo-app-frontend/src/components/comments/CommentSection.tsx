@@ -1,8 +1,13 @@
 import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import { toast } from '../../utils/toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { getComments, createComment, deleteComment } from '../../features/comments/commentSlice';
 import type { AppDispatch, RootState } from '../../app/store';
 import type { Comment } from '../../types';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import Input from '../ui/Input';
+import Button from '../ui/Button';
+import { useDeleteConfirm } from '../../hooks/useDeleteConfirm';
 
 interface CommentSectionProps {
   todoId: string;
@@ -35,14 +40,28 @@ const CommentSection = ({ todoId }: CommentSectionProps) => {
     setCommentContent('');
   };
 
-  const handleDelete = (commentId: string) => {
-    if (window.confirm('Are you sure you want to delete this comment?')) {
-      dispatch(deleteComment({ todoId, commentId }));
-    }
+  const deleteConfirm = useDeleteConfirm<string>();
+
+  const handleDeleteConfirm = () => {
+    if (deleteConfirm.target === null) return;
+    const commentId = deleteConfirm.target;
+    deleteConfirm.close();
+    dispatch(deleteComment({ todoId, commentId }))
+      .unwrap()
+      .then(() => toast.success('Comment deleted'))
+      .catch((err: string) => toast.error(err || 'Failed to delete comment'));
   };
 
   return (
     <div className="mt-4 border-t border-gray-200 pt-4">
+      <ConfirmDialog
+        open={deleteConfirm.isOpen}
+        title="Delete comment"
+        message="Are you sure you want to delete this comment?"
+        confirmLabel="Delete"
+        onConfirm={handleDeleteConfirm}
+        onCancel={deleteConfirm.close}
+      />
       <button
         onClick={() => setShowComments(!showComments)}
         className="flex items-center space-x-2 text-sm text-indigo-600 hover:text-indigo-800 font-medium"
@@ -62,31 +81,32 @@ const CommentSection = ({ todoId }: CommentSectionProps) => {
           )}
           <form onSubmit={handleSubmit} className="space-y-1">
             <div className="flex space-x-2">
-              <input
-                type="text"
-                value={commentContent}
-                onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                  setCommentContent(e.target.value);
-                  if (error) setError(null);
-                }}
-                placeholder="Add a comment..."
-                className={`flex-1 input-field text-sm ${error ? 'border-red-500 focus:ring-red-500' : ''}`}
-                aria-invalid={!!error}
-                aria-describedby={error ? 'comment-error' : undefined}
-              />
-              <button
+              <div className="flex-1 min-w-0">
+                <Input
+                  type="text"
+                  name="content"
+                  value={commentContent}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    setCommentContent(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  placeholder="Add a comment..."
+                  error={error ?? undefined}
+                  className="text-sm"
+                />
+              </div>
+              <Button
                 type="submit"
+                variant="primary"
+                size="sm"
                 disabled={isLoading}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                loading={isLoading}
+                loadingLabel="Posting..."
+                className="shrink-0"
               >
                 Post
-              </button>
+              </Button>
             </div>
-            {error && (
-              <p id="comment-error" className="text-sm text-red-600" role="alert">
-                {error}
-              </p>
-            )}
           </form>
 
           <div className="space-y-3 max-h-64 overflow-y-auto">
@@ -109,7 +129,7 @@ const CommentSection = ({ todoId }: CommentSectionProps) => {
                     </div>
                     {typeof comment.user === 'object' && comment.user._id === user?._id && (
                       <button
-                        onClick={() => handleDelete(comment._id)}
+                        onClick={() => deleteConfirm.requestDelete(comment._id)}
                         className="text-red-500 hover:text-red-700 text-xs"
                         title="Delete comment"
                       >

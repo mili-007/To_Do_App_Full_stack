@@ -1,6 +1,0 @@
-# Root level gitignore
-.DS_Store
-*.log
-.vscode/
-.idea/
-

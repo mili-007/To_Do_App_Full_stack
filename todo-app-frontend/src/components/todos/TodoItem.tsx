@@ -1,11 +1,18 @@
 import { useState, type ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { toast } from '../../utils/toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateTodo, deleteTodo } from '../../features/todos/todoSlice';
 import { getProjects } from '../../features/projects/projectSlice';
 import { getCategories } from '../../features/categories/categorySlice';
 import type { AppDispatch, RootState } from '../../app/store';
 import type { Todo, TodoFormData } from '../../types';
+import { HiOutlineEye, HiOutlineTrash } from 'react-icons/hi';
+import { FiEdit } from 'react-icons/fi';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import Input from '../ui/Input';
+import Button from '../ui/Button';
+import { useDeleteConfirm } from '../../hooks/useDeleteConfirm';
 
 /** Today in local YYYY-MM-DD for due date min (no past dates). */
 const getTodayMinDate = () => {
@@ -15,11 +22,15 @@ const getTodayMinDate = () => {
 
 interface TodoItemProps {
   todo: Todo;
+  /** Compact card for board view (~5 visible without scroll) */
+  compact?: boolean;
+  /** When set, View button opens this todo in parent's modal */
+  onView?: (todo: Todo) => void;
 }
 
 type EditFormErrors = Partial<Record<'title' | 'dueDate', string>>;
 
-const TodoItem = ({ todo }: TodoItemProps) => {
+const TodoItem = ({ todo, compact = false, onView }: TodoItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editErrors, setEditErrors] = useState<EditFormErrors>({});
   const dueDateStr = todo.dueDate ? todo.dueDate.split('T')[0] : '';
@@ -64,12 +75,17 @@ const TodoItem = ({ todo }: TodoItemProps) => {
     setIsEditing(false);
   };
   
-  const handleDelete = () => {
-    if (window.confirm('Are you sure you want to delete this todo?')) {
-      dispatch(deleteTodo(todo._id));
-    }
+  const deleteConfirm = useDeleteConfirm<string>();
+
+  const handleDeleteConfirm = () => {
+    if (deleteConfirm.target === null) return;
+    deleteConfirm.close();
+    dispatch(deleteTodo(deleteConfirm.target))
+      .unwrap()
+      .then(() => toast.success('Todo deleted'))
+      .catch((err: string) => toast.error(err || 'Failed to delete todo'));
   };
-  
+
   const toggleComplete = () => {
     dispatch(updateTodo({ 
       id: todo._id, 
@@ -85,24 +101,31 @@ const TodoItem = ({ todo }: TodoItemProps) => {
     }
   };
   
+  const cardClass = compact
+    ? `rounded-lg border bg-white shadow-sm transition-all duration-200 ${todo.completed ? 'bg-gray-50 border-gray-200 opacity-75' : 'border-gray-200 hover:border-indigo-300'} p-3`
+    : `card transition-all duration-200 ${todo.completed ? 'bg-gray-50 border-gray-200 opacity-75' : 'bg-white border-gray-200 hover:border-indigo-300'}`;
+
   return (
-    <div className={`card transition-all duration-200 ${todo.completed ? 'bg-gray-50 border-gray-200 opacity-75' : 'bg-white border-gray-200 hover:border-indigo-300'}`}>
+    <div className={cardClass}>
+      <ConfirmDialog
+        open={deleteConfirm.isOpen}
+        title="Delete todo"
+        message="Are you sure you want to delete this todo?"
+        confirmLabel="Delete"
+        onConfirm={handleDeleteConfirm}
+        onCancel={deleteConfirm.close}
+      />
       {isEditing ? (
         <div className="space-y-4">
-          <div>
-            <input
-              className={`input-field ${editErrors.title ? 'border-red-500 focus:ring-red-500' : ''}`}
-              type="text"
-              name="title"
-              value={editData.title}
-              onChange={onChange}
-              placeholder="Todo title"
-              aria-invalid={!!editErrors.title}
-            />
-            {editErrors.title && (
-              <p className="mt-1 text-sm text-red-600" role="alert">{editErrors.title}</p>
-            )}
-          </div>
+          <Input
+            type="text"
+            name="title"
+            value={editData.title}
+            onChange={onChange}
+            placeholder="Todo title"
+            required
+            error={editErrors.title}
+          />
           <textarea
             className="input-field resize-none"
             name="description"
@@ -122,19 +145,14 @@ const TodoItem = ({ todo }: TodoItemProps) => {
               <option value="medium">Medium</option>
               <option value="high">High</option>
             </select>
-            <input
-              className={`input-field ${editErrors.dueDate ? 'border-red-500 focus:ring-red-500' : ''}`}
+            <Input
               type="date"
               name="dueDate"
               value={editData.dueDate}
               min={getTodayMinDate()}
               onChange={onChange}
-              title="Select today or a future date"
-              aria-invalid={!!editErrors.dueDate}
+              error={editErrors.dueDate}
             />
-            {editErrors.dueDate && (
-              <p className="mt-1 text-sm text-red-600" role="alert">{editErrors.dueDate}</p>
-            )}
           </div>
           {isOwner && (
             <>
@@ -186,18 +204,104 @@ const TodoItem = ({ todo }: TodoItemProps) => {
             </>
           )}
           <div className="flex space-x-3 pt-2">
-            <button
+            <Button
+              type="button"
+              variant="success"
+              size="sm"
               onClick={handleUpdate}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+              className="flex-1"
             >
               Save Changes
-            </button>
-            <button
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
               onClick={() => setIsEditing(false)}
-              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200"
+              className="flex-1"
             >
               Cancel
-            </button>
+            </Button>
+          </div>
+        </div>
+      ) : compact ? (
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={todo.completed}
+            onChange={toggleComplete}
+            className="h-4 w-4 shrink-0 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer"
+          />
+          <div className="flex-1 min-w-0">
+            {onView ? (
+              <button
+                type="button"
+                onClick={() => onView(todo)}
+                className="text-left w-full block group"
+              >
+                <p className={`text-sm font-medium text-gray-800 truncate ${todo.completed ? 'line-through text-gray-400' : ''} group-hover:text-indigo-600`} title={todo.title}>
+                  {todo.title}
+                </p>
+              </button>
+            ) : (
+              <Link to={`/todos/${todo._id}`} className="block group">
+                <p className={`text-sm font-medium text-gray-800 truncate ${todo.completed ? 'line-through text-gray-400' : ''} group-hover:text-indigo-600`} title={todo.title}>
+                  {todo.title}
+                </p>
+              </Link>
+            )}
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className={`badge text-[10px] px-1.5 py-0 ${priorityColors[todo.priority]}`}>
+                {todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)}
+              </span>
+              {todo.dueDate && (
+                <span className="text-[10px] text-gray-500">
+                  Due {new Date(todo.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-0">
+            {onView && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="!p-1"
+                onClick={() => onView(todo)}
+                title="View details"
+              >
+                <HiOutlineEye className="w-4 h-4 text-indigo-600" aria-hidden />
+              </Button>
+            )}
+            {isOwner && (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="!p-1"
+                onClick={() => {
+                  dispatch(getProjects());
+                  dispatch(getCategories());
+                  setIsEditing(true);
+                }}
+                title="Edit todo"
+              >
+                <FiEdit className="w-4 h-4" aria-hidden />
+              </Button>
+              <Button
+                type="button"
+                variant="ghostDanger"
+                size="icon"
+                className="!p-1"
+                onClick={() => deleteConfirm.requestDelete(todo._id)}
+                title="Delete todo"
+              >
+                <HiOutlineTrash className="w-4 h-4" aria-hidden />
+              </Button>
+            </>
+            )}
           </div>
         </div>
       ) : (
@@ -295,28 +399,28 @@ const TodoItem = ({ todo }: TodoItemProps) => {
           <div className="flex-shrink-0 flex space-x-2">
             {isOwner && (
               <>
-                <button
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => {
                     dispatch(getProjects());
                     dispatch(getCategories());
                     setIsEditing(true);
                   }}
-                  className="p-2 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-lg transition-colors duration-200"
                   title="Edit todo"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={handleDelete}
-                  className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                  <FiEdit className="w-5 h-5" aria-hidden />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghostDanger"
+                  size="icon"
+                  onClick={() => deleteConfirm.requestDelete(todo._id)}
                   title="Delete todo"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+                  <HiOutlineTrash className="w-5 h-5" aria-hidden />
+                </Button>
               </>
             )}
           </div>

@@ -1,4 +1,6 @@
 import { useState, FormEvent, ChangeEvent } from 'react';
+import Input from '../ui/Input';
+import Button from '../ui/Button';
 
 interface ProjectFormProps {
   onSubmit: (projectData: { name: string; description?: string; color?: string }) => void;
@@ -25,28 +27,19 @@ const ProjectForm = ({ onSubmit, isLoading }: ProjectFormProps) => {
     <div className="card bg-white/90 backdrop-blur-sm border border-gray-200">
       <h2 className="text-xl font-bold text-gray-800 mb-4">Create New Project</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-gray-700 text-sm font-semibold mb-2">
-            Project Name <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            value={formData.name}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => {
-              setFormData(prev => ({ ...prev, name: e.target.value }));
-              if (error) setError(null);
-            }}
-            className={`input-field ${error ? 'border-red-500 focus:ring-red-500' : ''}`}
-            placeholder="Enter project name"
-            aria-invalid={!!error}
-            aria-describedby={error ? 'project-name-error' : undefined}
-          />
-          {error && (
-            <p id="project-name-error" className="mt-1 text-sm text-red-600" role="alert">
-              {error}
-            </p>
-          )}
-        </div>
+        <Input
+          type="text"
+          name="name"
+          label="Project Name"
+          value={formData.name}
+          onChange={(e: ChangeEvent<HTMLInputElement>) => {
+            setFormData(prev => ({ ...prev, name: e.target.value }));
+            if (error) setError(null);
+          }}
+          placeholder="Enter project name"
+          required
+          error={error ?? undefined}
+        />
         <div>
           <label className="block text-gray-700 text-sm font-semibold mb-2">
             Description
@@ -78,13 +71,15 @@ const ProjectForm = ({ onSubmit, isLoading }: ProjectFormProps) => {
             </div>
           </div>
         </div>
-        <button
+        <Button
           type="submit"
-          disabled={isLoading}
-          className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+          variant="primary"
+          fullWidth
+          loading={isLoading}
+          loadingLabel="Creating..."
         >
-          {isLoading ? 'Creating...' : 'Create Project'}
-        </button>
+          Create Project
+        </Button>
       </form>
     </div>
   );

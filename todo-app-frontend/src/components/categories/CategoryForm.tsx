@@ -8,7 +8,7 @@ const defaultValues: CategoryFormValues = {
   color: '#10B981'
 };
 
-const CategoryForm = ({ onSubmit, isLoading }: CategoryFormProps) => {
+const CategoryForm = ({ onSubmit, isLoading, embedded = false }: CategoryFormProps) => {
   const {
     control,
     handleSubmit,
@@ -21,10 +21,8 @@ const CategoryForm = ({ onSubmit, isLoading }: CategoryFormProps) => {
     reset(defaultValues);
   };
 
-  return (
-    <div className="card bg-white/90 backdrop-blur-sm border border-gray-200">
-      <h2 className="text-xl font-bold text-gray-800 mb-4">Create New Category</h2>
-      <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+  const form = (
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
         <Controller
           name="name"
           control={control}
@@ -74,6 +72,16 @@ const CategoryForm = ({ onSubmit, isLoading }: CategoryFormProps) => {
           Create Category
         </Button>
       </form>
+  );
+
+  if (embedded) {
+    return form;
+  }
+
+  return (
+    <div className="card bg-white/90 backdrop-blur-sm border border-gray-200">
+      <h2 className="text-xl font-bold text-gray-800 mb-4">Create New Category</h2>
+      {form}
     </div>
   );
 };

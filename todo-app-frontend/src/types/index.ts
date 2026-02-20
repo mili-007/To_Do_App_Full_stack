@@ -92,6 +92,8 @@ export interface CategoryFormData {
 export interface CategoryFormProps {
   onSubmit: (categoryData: { name: string; color?: string }) => void;
   isLoading: boolean;
+  /** When true, render without card wrapper (e.g. inside a modal). */
+  embedded?: boolean;
 }
 
 /** Form values for Category create form (react-hook-form). */

@@ -1,8 +1,8 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
 import { NAV_LINKS, getNavLinkClassName } from '../../constants/nav';
+import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../features/auth/authSlice';
-import type { RootState, AppDispatch } from '../../app/store';
+import type { AppDispatch, RootState } from '../../app/store';
 
 const AppHeader = () => {
   const navigate = useNavigate();

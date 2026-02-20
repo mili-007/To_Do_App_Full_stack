@@ -4,6 +4,7 @@ import type { Todo, TodoState, TodoFormData } from '../../types';
 
 const initialState: TodoState = {
   todos: [],
+  selectedTodo: null,
   isError: false,
   isSuccess: false,
   isLoading: false,
@@ -20,6 +21,34 @@ export const getTodos = createAsyncThunk<
   async (_, thunkAPI) => {
     try {
       return await todoService.getTodos();
+    } catch (error) {
+      const message = (
+        error instanceof Error &&
+        'response' in error &&
+        error.response &&
+        typeof error.response === 'object' &&
+        'data' in error.response &&
+        error.response.data &&
+        typeof error.response.data === 'object' &&
+        'message' in error.response.data &&
+        typeof error.response.data.message === 'string'
+      ) ? error.response.data.message : 
+      (error instanceof Error ? error.message : String(error));
+      return thunkAPI.rejectWithValue(message);
+    }
+  }
+);
+
+// Get single todo by ID (for detail page; avoids scanning the list)
+export const getTodoById = createAsyncThunk<
+  Todo,
+  string,
+  { rejectValue: string }
+>(
+  'todos/getById',
+  async (id, thunkAPI) => {
+    try {
+      return await todoService.getTodoById(id);
     } catch (error) {
       const message = (
         error instanceof Error &&
@@ -142,6 +171,9 @@ export const todoSlice = createSlice({
       state.isSuccess = false;
       state.isError = false;
       state.message = '';
+    },
+    clearSelectedTodo: (state) => {
+      state.selectedTodo = null;
     }
   },
   extraReducers: (builder) => {
@@ -158,6 +190,20 @@ export const todoSlice = createSlice({
         state.isLoading = false;
         state.isError = true;
         state.message = action.payload || 'Failed to fetch todos';
+      })
+      .addCase(getTodoById.pending, (state) => {
+        state.isLoading = true;
+        state.selectedTodo = null;
+      })
+      .addCase(getTodoById.fulfilled, (state, action: PayloadAction<Todo>) => {
+        state.isLoading = false;
+        state.selectedTodo = action.payload;
+      })
+      .addCase(getTodoById.rejected, (state, action) => {
+        state.isLoading = false;
+        state.selectedTodo = null;
+        state.isError = true;
+        state.message = action.payload || 'Failed to fetch todo';
       })
       .addCase(createTodo.pending, (state) => {
         state.isLoading = true;
@@ -177,15 +223,21 @@ export const todoSlice = createSlice({
         state.todos = state.todos.map((todo) =>
           todo._id === action.payload._id ? action.payload : todo
         );
+        if (state.selectedTodo?._id === action.payload._id) {
+          state.selectedTodo = action.payload;
+        }
       })
       .addCase(deleteTodo.fulfilled, (state, action: PayloadAction<string>) => {
         state.isLoading = false;
         state.isSuccess = true;
         state.todos = state.todos.filter((todo) => todo._id !== action.payload);
+        if (state.selectedTodo?._id === action.payload) {
+          state.selectedTodo = null;
+        }
       });
   }
 });
 
-export const { reset } = todoSlice.actions;
+export const { reset, clearSelectedTodo } = todoSlice.actions;
 export default todoSlice.reducer;
 

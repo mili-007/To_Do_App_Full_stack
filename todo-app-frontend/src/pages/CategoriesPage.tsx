@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { toast } from '../utils/toast';
-import { useDispatch, useSelector } from 'react-redux';
 import { getCategories, createCategory, deleteCategory } from '../features/categories/categorySlice';
+import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from '../app/store';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import FormListLayout from '../components/ui/FormListLayout';

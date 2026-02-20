@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { 
-  getTodos, 
-  createTodo, 
-  updateTodo, 
-  deleteTodo 
+const {
+  getTodoById,
+  getTodos,
+  createTodo,
+  updateTodo,
+  deleteTodo
 } = require('../controllers/todoController');
 const { 
   getComments, 
@@ -19,6 +20,7 @@ router.route('/')
   .post(protect, createTodo);
 
 router.route('/:id')
+  .get(protect, getTodoById)
   .put(protect, updateTodo)
   .delete(protect, deleteTodo);
 

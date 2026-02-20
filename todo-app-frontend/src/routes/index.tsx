@@ -1,7 +1,7 @@
 import { useSelector } from 'react-redux';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import type { RootState } from '../app/store';
-import Register from '../components/auth/Register';
+import RegisterPage from '../pages/RegisterPage';
 import PrivateRoute from './PrivateRoute';
 import AuthRouteLayout from '../components/layout/AuthRouteLayout';
 import Layout from '../components/layout/Layout';
@@ -20,7 +20,7 @@ const AppRoutes = () => {
       <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
       <Route element={<AuthRouteLayout />}>
         <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<Register />} />
+        <Route path="register" element={<RegisterPage />} />
       </Route>
       <Route element={<PrivateRoute />}>
         <Route element={<Layout />}>

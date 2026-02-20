@@ -1,6 +1,3 @@
-/**
- * Strong password validation for signup (must match backend rules).
- */
 const MIN_LENGTH = 8;
 const MAX_LENGTH = 128;
 
@@ -11,6 +8,14 @@ export const PASSWORD_REQUIREMENTS = [
   'At least one number',
   'At least one special character (!@#$%^&* etc.)',
 ] as const;
+
+export const PASSWORD_RULE_CHECKS: ReadonlyArray<{ label: string; test: (p: string) => boolean }> = [
+  { label: `At least ${MIN_LENGTH} characters`, test: (p) => p.length >= MIN_LENGTH },
+  { label: 'One uppercase letter', test: (p) => /[A-Z]/.test(p) },
+  { label: 'One lowercase letter', test: (p) => /[a-z]/.test(p) },
+  { label: 'One number', test: (p) => /\d/.test(p) },
+  { label: 'One special character (!@#$%^&* etc.)', test: (p) => /[!@#$%^&*()_+\-=[\]{}|;':",./<>?\\`~]/.test(p) },
+];
 
 const RULES: Array<{ test: (p: string) => boolean; message: string }> = [
   { test: (p) => p.length >= MIN_LENGTH, message: `At least ${MIN_LENGTH} characters` },
@@ -26,9 +31,6 @@ export interface PasswordValidationResult {
   message: string;
 }
 
-/**
- * Validate password strength for registration (signup).
- */
 export function validatePasswordStrength(password: string): PasswordValidationResult {
   if (typeof password !== 'string') {
     return { valid: false, message: 'Password is required' };
@@ -45,9 +47,7 @@ export function validatePasswordStrength(password: string): PasswordValidationRe
   return { valid: true, message: '' };
 }
 
-/**
- * Basic validation for login: non-empty.
- */
+
 export function validatePasswordForLogin(password: string): PasswordValidationResult {
   if (typeof password !== 'string') {
     return { valid: false, message: 'Password is required' };

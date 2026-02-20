@@ -3,7 +3,6 @@ import { useEffect, type ReactNode } from 'react';
 export interface ModalProps {
   open: boolean;
   onClose: () => void;
-  /** Optional modal title; if omitted, only the close button is shown in the header */
   title?: string;
   children: ReactNode;
 }

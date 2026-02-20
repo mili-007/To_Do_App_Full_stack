@@ -1,38 +1,40 @@
 import { useEffect } from 'react';
-import { toast } from '../utils/toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import type { AppDispatch, RootState } from '../app/store';
 import CommentSection from '../components/comments/CommentSection';
 import TodoDetailView from '../components/todos/TodoDetailView';
-import BackLink from '../components/ui/BackLink';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import PageHeader from '../components/ui/PageHeader';
 import { getComments } from '../features/comments/commentSlice';
-import { deleteTodo, getTodos, updateTodo } from '../features/todos/todoSlice';
+import { clearSelectedTodo, deleteTodo, getTodoById, updateTodo } from '../features/todos/todoSlice';
 import { useDeleteConfirm } from '../hooks/useDeleteConfirm';
+import type { TodoDetailUpdatePayload } from '../types';
+import { toast } from '../utils/toast';
 
 const TodoDetailPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const { todos, isLoading } = useSelector((state: RootState) => state.todos);
+  const { selectedTodo, isLoading } = useSelector((state: RootState) => state.todos);
   const { user } = useSelector((state: RootState) => state.auth);
   const deleteConfirm = useDeleteConfirm<string>();
 
-  const todo = todos.find(t => t._id === id);
-
   useEffect(() => {
-    if (!todo && !isLoading) dispatch(getTodos());
-    if (id) dispatch(getComments(id));
-  }, [id, todo, isLoading, dispatch]);
+    if (id) {
+      dispatch(getTodoById(id));
+      dispatch(getComments(id));
+    }
+    return () => {
+      dispatch(clearSelectedTodo());
+    };
+  }, [id, dispatch]);
 
-  if (isLoading && !todo) {
+  if (isLoading && !selectedTodo) {
     return <LoadingSpinner />;
   }
 
-  if (!todo) {
+  if (!selectedTodo) {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Todo not found</h2>
@@ -43,8 +45,8 @@ const TodoDetailPage = () => {
     );
   }
 
-  const handleUpdate = (todoData: Record<string, unknown>) => {
-    dispatch(updateTodo({ id: todo._id, todoData }));
+  const handleUpdate = (todoData: TodoDetailUpdatePayload) => {
+    dispatch(updateTodo({ id: selectedTodo._id, todoData }));
   };
 
   const handleDeleteConfirm = () => {
@@ -60,7 +62,9 @@ const TodoDetailPage = () => {
   };
 
   const isOwner =
-    typeof todo.user === 'object' ? todo.user._id === user?._id : todo.user === user?._id;
+    typeof selectedTodo.user === 'object'
+      ? selectedTodo.user._id === user?._id
+      : selectedTodo.user === user?._id;
 
   return (
     <div>
@@ -72,21 +76,17 @@ const TodoDetailPage = () => {
         onConfirm={handleDeleteConfirm}
         onCancel={deleteConfirm.close}
       />
-      <div className="mb-6">
-        <BackLink to="/dashboard">Back to Todos</BackLink>
-        <PageHeader title="Todo Details" />
-      </div>
-
+    
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <TodoDetailView
-            todo={todo}
+            todo={selectedTodo}
             onUpdate={handleUpdate}
-            onDelete={() => deleteConfirm.requestDelete(todo._id)}
+            onDelete={() => deleteConfirm.requestDelete(selectedTodo._id)}
             isOwner={isOwner}
           />
           <div className="mt-6">
-            <CommentSection todoId={todo._id} />
+            <CommentSection todoId={selectedTodo._id} />
           </div>
         </div>
         <div className="lg:col-span-1">
@@ -97,23 +97,23 @@ const TodoDetailPage = () => {
                 <span className="text-sm text-gray-600">Status:</span>
                 <span
                   className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
-                    todo.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    selectedTodo.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
                   }`}
                 >
-                  {todo.completed ? 'Completed' : 'Pending'}
+                  {selectedTodo.completed ? 'Completed' : 'Pending'}
                 </span>
               </div>
               <div>
                 <span className="text-sm text-gray-600">Created:</span>
                 <span className="ml-2 text-sm text-gray-800">
-                  {new Date(todo.createdAt).toLocaleDateString()}
+                  {new Date(selectedTodo.createdAt).toLocaleDateString()}
                 </span>
               </div>
-              {todo.updatedAt && (
+              {selectedTodo.updatedAt && (
                 <div>
                   <span className="text-sm text-gray-600">Updated:</span>
                   <span className="ml-2 text-sm text-gray-800">
-                    {new Date(todo.updatedAt).toLocaleDateString()}
+                    {new Date(selectedTodo.updatedAt).toLocaleDateString()}
                   </span>
                 </div>
               )}

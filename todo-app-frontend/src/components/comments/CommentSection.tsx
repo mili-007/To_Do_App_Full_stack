@@ -3,15 +3,11 @@ import { toast } from '../../utils/toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { getComments, createComment, deleteComment } from '../../features/comments/commentSlice';
 import type { AppDispatch, RootState } from '../../app/store';
-import type { Comment } from '../../types';
+import type { Comment, CommentSectionProps } from '../../types';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
 import { useDeleteConfirm } from '../../hooks/useDeleteConfirm';
-
-interface CommentSectionProps {
-  todoId: string;
-}
 
 const CommentSection = ({ todoId }: CommentSectionProps) => {
   const [showComments, setShowComments] = useState(false);

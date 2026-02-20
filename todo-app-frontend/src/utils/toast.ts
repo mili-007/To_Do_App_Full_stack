@@ -16,9 +16,7 @@ const defaultToastOptions: DefaultToastOptions = {
   }
 };
 
-/**
- * Unified toast API for the app. Use across all pages for success, error, warning, and info messages.
- */
+
 export const toast = {
   success: (message: string, options?: ToastOptions) =>
     baseToast.success(message, { ...defaultToastOptions.success, ...options }),
@@ -50,7 +48,6 @@ export const toast = {
       ...options
     }),
 
-  /** Raw toast for custom use (e.g. loading, custom content). */
   custom: baseToast
 };
 

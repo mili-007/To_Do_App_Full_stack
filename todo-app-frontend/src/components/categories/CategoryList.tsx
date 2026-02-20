@@ -1,4 +1,6 @@
 import type { Category } from '../../types';
+import LoadingSpinner from '../ui/LoadingSpinner';
+import EmptyState from '../ui/EmptyState';
 
 interface CategoryListProps {
   categories: Category[];
@@ -10,26 +12,22 @@ const CategoryList = ({ categories, isLoading, onDelete }: CategoryListProps) =>
   if (isLoading) {
     return (
       <div className="card">
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        </div>
+        <LoadingSpinner />
       </div>
     );
   }
 
   if (categories.length === 0) {
     return (
-      <div className="card bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="text-center py-16">
-          <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-4 mx-auto">
-            <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-            </svg>
-          </div>
-          <p className="text-gray-600 font-medium text-lg mb-2">No categories yet</p>
-          <p className="text-gray-500 text-sm">Create your first category to tag your todos!</p>
-        </div>
-      </div>
+      <EmptyState
+        icon={
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+          </svg>
+        }
+        title="No categories yet"
+        subtitle="Create your first category to tag your todos!"
+      />
     );
   }
 

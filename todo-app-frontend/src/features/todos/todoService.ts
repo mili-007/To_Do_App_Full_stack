@@ -10,6 +10,12 @@ const getTodos = async (): Promise<Todo[]> => {
   return response.data;
 };
 
+// Get a single todo by ID
+const getTodoById = async (todoId: string): Promise<Todo> => {
+  const response = await axiosInstance.get<Todo>(`${API_URL}/${todoId}`);
+  return response.data;
+};
+
 // Create todo
 const createTodo = async (todoData: TodoFormData): Promise<Todo> => {
   const response = await axiosInstance.post<Todo>(API_URL, todoData);
@@ -29,6 +35,7 @@ const deleteTodo = async (todoId: string): Promise<void> => {
 
 const todoService = {
   getTodos,
+  getTodoById,
   createTodo,
   updateTodo,
   deleteTodo

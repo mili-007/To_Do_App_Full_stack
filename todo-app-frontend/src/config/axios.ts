@@ -32,14 +32,10 @@ axiosInstance.interceptors.response.use(
   (error: AxiosError<{ message?: string }>) => {
     // Handle 401 Unauthorized errors
     if (error.response?.status === 401) {
-      // Clear user data from localStorage
       localStorage.removeItem('user');
-      
-      // Trigger a custom event that components can listen to
-      // This avoids circular dependencies with Redux store
-      window.dispatchEvent(new CustomEvent('auth:logout', { 
-        detail: { reason: 'token_expired' } 
-      }));
+      // window.dispatchEvent(new CustomEvent('auth:logout', { 
+      //   detail: { reason: 'token_expired' } 
+      // }));
     }
     
     return Promise.reject(error);

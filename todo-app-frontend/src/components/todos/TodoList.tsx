@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from '../../utils/toast';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { getTodos, reset, updateTodo, deleteTodo } from '../../features/todos/todoSlice';
+import type { AppDispatch, RootState } from '../../app/store';
 import { getComments } from '../../features/comments/commentSlice';
-import type { RootState, AppDispatch } from '../../app/store';
 import type { Todo } from '../../types';
 import TodoItem from './TodoItem';
 import TodoDetailView from './TodoDetailView';
 import CommentSection from '../comments/CommentSection';
 import Modal from '../ui/Modal';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import LoadingSpinner from '../ui/LoadingSpinner';
+import EmptyState from '../ui/EmptyState';
 import { useDeleteConfirm } from '../../hooks/useDeleteConfirm';
 
 const PRIORITIES = ['high', 'medium', 'low'] as const;
@@ -29,19 +31,26 @@ const groupByPriority = (todos: Todo[]): Record<string, Todo[]> => {
   return groups;
 };
 
-const TodoList = () => {
+interface TodoListProps {
+  /** When provided, Edit button opens Add/Edit modal with this todo instead of inline edit */
+  onEditTodo?: (todo: Todo) => void;
+}
+
+const TodoList = ({ onEditTodo }: TodoListProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const [viewTodoId, setViewTodoId] = useState<string | null>(null);
   const deleteConfirm = useDeleteConfirm<string>();
 
-  const { todos, isLoading, isError, message } = useSelector(
-    (state: RootState) => state.todos
-  );
-
+  const { todos, isLoading, isError, message } = useSelector((state: RootState) => state.todos);
   const { user } = useSelector((state: RootState) => state.auth);
 
   const byPriority = useMemo(() => groupByPriority(todos), [todos]);
   const viewTodo = viewTodoId ? todos.find((t) => t._id === viewTodoId) ?? null : null;
+
+  const handleEditFromView = (todo: Todo) => {
+    setViewTodoId(null);
+    onEditTodo?.(todo);
+  };
 
   useEffect(() => {
     if (viewTodoId) dispatch(getComments(viewTodoId));
@@ -86,9 +95,7 @@ const TodoList = () => {
   if (isLoading) {
     return (
       <div className="card">
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600" />
-        </div>
+        <LoadingSpinner />
       </div>
     );
   }
@@ -96,29 +103,17 @@ const TodoList = () => {
   return (
     <div className="min-h-[320px]">
       {todos.length === 0 ? (
-        <div className="card text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100">
-          <div className="flex flex-col items-center">
-            <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <p className="text-gray-600 font-medium text-lg mb-2">No todos found</p>
-            <p className="text-gray-500 text-sm">Add your first todo to get started!</p>
-          </div>
-        </div>
+        <EmptyState
+          icon={
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          }
+          title="No todos found"
+          subtitle="Add your first todo to get started!"
+        />
       ) : (
         <div className="space-y-3">
-          {/* <div className="text-xs text-gray-500 flex items-center gap-3">
-            <span className="font-semibold uppercase tracking-wide text-gray-600">Quick filters:</span>
-            <button type="button" className="text-indigo-600 hover:text-indigo-700 font-medium">
-              Only My Issues
-            </button>
-            <button type="button" className="text-indigo-600 hover:text-indigo-700 font-medium">
-              Recently Updated
-            </button>
-          </div> */}
-
           <div className="flex gap-4 overflow-x-auto pb-2">
             {PRIORITIES?.map((priority) => {
               const columnTodos = byPriority[priority] ?? [];
@@ -141,8 +136,8 @@ const TodoList = () => {
                       <TodoItem
                         key={todo._id}
                         todo={todo}
-                        compact
                         onView={(t) => setViewTodoId(t._id)}
+                        onEdit={onEditTodo}
                       />
                     ))}
                   </div>
@@ -175,6 +170,7 @@ const TodoList = () => {
               todo={viewTodo}
               onUpdate={(todoData) => dispatch(updateTodo({ id: viewTodo._id, todoData }))}
               onDelete={() => deleteConfirm.requestDelete(viewTodo._id)}
+              onEdit={onEditTodo ? () => handleEditFromView(viewTodo) : undefined}
               isOwner={
                 typeof viewTodo.user === 'object'
                   ? viewTodo.user._id === user?._id

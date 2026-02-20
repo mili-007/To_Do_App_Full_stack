@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Project } from '../../types';
+import LoadingSpinner from '../ui/LoadingSpinner';
+import EmptyState from '../ui/EmptyState';
 
 interface ProjectListProps {
   projects: Project[];
@@ -11,26 +13,22 @@ const ProjectList = ({ projects, isLoading, onDelete }: ProjectListProps) => {
   if (isLoading) {
     return (
       <div className="card">
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-        </div>
+        <LoadingSpinner />
       </div>
     );
   }
 
   if (projects.length === 0) {
     return (
-      <div className="card bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="text-center py-16">
-          <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mb-4 mx-auto">
-            <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-          </div>
-          <p className="text-gray-600 font-medium text-lg mb-2">No projects yet</p>
-          <p className="text-gray-500 text-sm">Create your first project to get started!</p>
-        </div>
-      </div>
+      <EmptyState
+        icon={
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+        }
+        title="No projects yet"
+        subtitle="Create your first project to get started!"
+      />
     );
   }
 

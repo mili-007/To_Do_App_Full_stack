@@ -17,6 +17,34 @@ function isDueDateInPast(dueDate) {
   return d.getTime() < today.getTime();
 }
 
+// Get a single todo by ID (owner or shared-with only)
+const getTodoById = async (req, res) => {
+  try {
+    const todo = await Todo.findById(req.params.id)
+      .populate('user', 'name email')
+      .populate('project', 'name color')
+      .populate('categories', 'name color')
+      .populate('sharedWith', 'name email');
+
+    if (!todo) {
+      return res.status(404).json({ message: 'Todo not found' });
+    }
+
+    const hasAccess =
+      todo.user._id.toString() === req.user._id.toString() ||
+      todo.sharedWith.some((u) => u._id.toString() === req.user._id.toString());
+
+    if (!hasAccess) {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    res.json(todo);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Get all todos for a user (including shared todos)
 const getTodos = async (req, res) => {
   try {
@@ -163,6 +191,7 @@ const deleteTodo = async (req, res) => {
 };
 
 module.exports = {
+  getTodoById,
   getTodos,
   createTodo,
   updateTodo,

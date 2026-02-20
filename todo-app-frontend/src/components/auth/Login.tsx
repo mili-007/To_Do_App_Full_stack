@@ -1,22 +1,31 @@
-import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '../../utils/toast';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { login, reset } from '../../features/auth/authSlice';
+import type { AppDispatch, RootState } from '../../app/store';
+import type { LoginFormValues } from '../../types';
 import { validatePasswordForLogin } from '../../utils/passwordValidation';
-import type { RootState, AppDispatch } from '../../app/store';
 import AuthCardHeader from './AuthCardHeader';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 
+const defaultValues: LoginFormValues = {
+  email: '',
+  password: ''
+};
+
 const Login = () => {
-  const [formData, setFormData] = useState({ email: '', password: '' });
-  const { email, password } = formData;
+  const {
+    control,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<LoginFormValues>({ defaultValues });
+
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const { user, isLoading, isError, isSuccess, message } = useSelector(
-    (state: RootState) => state.auth
-  );
+  const { user, isLoading, isError, isSuccess, message } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     if (isError && message) toast.error(message);
@@ -24,18 +33,13 @@ const Login = () => {
     dispatch(reset());
   }, [user, isError, isSuccess, message, navigate, dispatch]);
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const pwdCheck = validatePasswordForLogin(password);
+  const onSubmit = (data: LoginFormValues) => {
+    const pwdCheck = validatePasswordForLogin(data.password);
     if (!pwdCheck.valid) {
       toast.error(pwdCheck.message);
       return;
     }
-    dispatch(login({ email, password }));
+    dispatch(login({ email: data.email, password: data.password }));
   };
 
   return (
@@ -44,25 +48,37 @@ const Login = () => {
         title="Sign In"
         subtitle="Sign in to continue to your Todo App"
       />
-      <form className="space-y-6" onSubmit={onSubmit}>
+      <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
         <div className="space-y-4">
-          <Input
-            type="email"
+          <Controller
             name="email"
-            label="Email address"
-            value={email}
-            onChange={onChange}
-            placeholder="you@example.com"
-            required
+            control={control}
+            rules={{ required: 'Email is required' }}
+            render={({ field }) => (
+              <Input
+                {...field}
+                type="email"
+                label="Email address"
+                placeholder="you@example.com"
+                required
+                error={errors.email?.message}
+              />
+            )}
           />
-          <Input
-            type="password"
+          <Controller
             name="password"
-            label="Password"
-            value={password}
-            onChange={onChange}
-            placeholder="Enter your password"
-            required
+            control={control}
+            rules={{ required: 'Password is required' }}
+            render={({ field }) => (
+              <Input
+                {...field}
+                type="password"
+                label="Password"
+                placeholder="Enter your password"
+                required
+                error={errors.password?.message}
+              />
+            )}
           />
         </div>
         <Button

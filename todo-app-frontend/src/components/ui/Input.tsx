@@ -1,4 +1,4 @@
-import type { ChangeEvent } from 'react';
+import { forwardRef, type ChangeEvent } from 'react';
 import PasswordInput from './PasswordInput';
 
 const LABEL_CLASS = 'block text-sm font-semibold text-gray-700 mb-2';
@@ -25,6 +25,7 @@ export interface InputProps {
   name: string;
   value: string;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: ChangeEvent<HTMLInputElement>) => void;
   label?: string;
   error?: string;
   placeholder?: string;
@@ -41,27 +42,31 @@ export interface InputProps {
   'aria-describedby'?: string;
 }
 
-const Input = ({
-  type = 'text',
-  id,
-  name,
-  value,
-  onChange,
-  label,
-  error,
-  placeholder,
-  required,
-  disabled,
-  minLength,
-  maxLength,
-  min,
-  max,
-  step,
-  className = '',
-  autoComplete,
-  'aria-invalid': ariaInvalid,
-  'aria-describedby': ariaDescribedby
-}: InputProps) => {
+const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
+  {
+    type = 'text',
+    id,
+    name,
+    value,
+    onChange,
+    onBlur,
+    label,
+    error,
+    placeholder,
+    required,
+    disabled,
+    minLength,
+    maxLength,
+    min,
+    max,
+    step,
+    className = '',
+    autoComplete,
+    'aria-invalid': ariaInvalid,
+    'aria-describedby': ariaDescribedby
+  },
+  ref
+) {
   const inputId = id ?? name;
   const hasError = Boolean(error);
   const inputClassName = `${INPUT_BASE_CLASS} ${hasError ? 'border-red-500 focus:ring-red-500' : ''} ${className}`.trim();
@@ -72,6 +77,7 @@ const Input = ({
     name,
     value,
     onChange,
+    onBlur,
     placeholder,
     required,
     'aria-invalid': ariaInvalid ?? hasError,
@@ -89,11 +95,13 @@ const Input = ({
       {type === 'password' ? (
         <PasswordInput
           {...commonProps}
+          ref={ref}
           minLength={minLength}
           className={hasError ? 'border-red-500 focus:ring-red-500' : ''}
         />
       ) : (
         <input
+          ref={ref}
           type={type}
           {...commonProps}
           disabled={disabled}
@@ -113,6 +121,6 @@ const Input = ({
       )}
     </div>
   );
-};
+});
 
 export default Input;

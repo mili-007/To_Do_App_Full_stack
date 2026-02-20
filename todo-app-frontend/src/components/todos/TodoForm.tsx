@@ -1,115 +1,113 @@
-import { useState, useEffect } from 'react';
-import type { ChangeEvent, FormEvent,} from 'react';
+import { useEffect, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
-import { createTodo } from '../../features/todos/todoSlice';
-import { getProjects } from '../../features/projects/projectSlice';
-import { getCategories } from '../../features/categories/categorySlice';
+import { createTodo, updateTodo } from '../../features/todos/todoSlice';
 import type { AppDispatch, RootState } from '../../app/store';
-import type { TodoFormData } from '../../types';
+import { createProject, getProjects } from '../../features/projects/projectSlice';
+import { getCategories } from '../../features/categories/categorySlice';
+import type { Todo, TodoFormData, TodoFormProps } from '../../types';
+import { getTodayMinDate } from '../../utils/date';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
+import Dropdown from '../ui/Dropdown';
+import Modal from '../ui/Modal';
+import ProjectForm from '../projects/ProjectForm';
+import { PRIORITY_OPTIONS } from '../../constants/todo';
 
-/** Today in local date for min attribute (YYYY-MM-DD). User cannot pick a past due date. */
-const getTodayMinDate = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+const emptyDefaultValues: TodoFormData = {
+  title: '',
+  description: '',
+  priority: 'medium',
+  dueDate: '',
+  project: null,
+  categories: [],
+  sharedWith: []
 };
 
-type FormErrors = Partial<Record<'title' | 'dueDate', string>>;
-
-interface TodoFormProps {
-  onCancel?: () => void;
-  onSuccess?: () => void;
-  /** When true, omit card wrapper and heading (e.g. inside a modal) */
-  embedded?: boolean;
+function todoToFormData(todo: Todo): TodoFormData {
+  return {
+    title: todo.title,
+    description: todo.description ?? '',
+    priority: todo.priority,
+    dueDate: todo.dueDate ? todo.dueDate.split('T')[0] : '',
+    project: typeof todo.project === 'object' ? todo.project?._id ?? null : (todo.project ?? null),
+    categories: Array.isArray(todo.categories)
+      ? todo.categories.map((c) => (c != null && typeof c === 'object' ? c._id : c)).filter(Boolean) as string[]
+      : [],
+    sharedWith: Array.isArray(todo.sharedWith)
+      ? todo.sharedWith.map((u) => (typeof u === 'object' ? u._id : u)).filter(Boolean)
+      : []
+  };
 }
 
-const TodoForm = ({ onCancel, onSuccess, embedded = false }: TodoFormProps) => {
-  const [formData, setFormData] = useState<TodoFormData>({
-    title: '',
-    description: '',
-    priority: 'medium',
-    dueDate: '',
-    project: null,
-    categories: [],
-    sharedWith: []
-  });
-  const [errors, setErrors] = useState<FormErrors>({});
+const TodoForm = ({ initialTodo = null, onCancel, onSuccess, embedded = false }: TodoFormProps) => {
+  const isEdit = Boolean(initialTodo);
+  const defaultValues = isEdit && initialTodo ? todoToFormData(initialTodo) : emptyDefaultValues;
 
-  const { title, description, priority, dueDate, project, categories } = formData;
-  
+  const { control, handleSubmit, reset, setValue } = useForm<TodoFormData>({ defaultValues });
+
   const dispatch = useDispatch<AppDispatch>();
+  const [addProjectModalOpen, setAddProjectModalOpen] = useState(false);
+  const [isCreatingProject, setIsCreatingProject] = useState(false);
   const { projects } = useSelector((state: RootState) => state.projects);
   const { categories: availableCategories } = useSelector((state: RootState) => state.categories);
   const { isError: createError, message: createMessage } = useSelector((state: RootState) => state.todos);
-  
+
   useEffect(() => {
     dispatch(getProjects());
     dispatch(getCategories());
   }, [dispatch]);
-  
-  const onChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prevState) => ({ ...prevState, [name]: value }));
-    if (errors[name as keyof FormErrors]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
-  };
 
-  const handleCategoryToggle = (categoryId: string) => {
-    setFormData((prevState) => ({
-      ...prevState,
-      categories: prevState.categories?.includes(categoryId)
-        ? prevState.categories.filter(id => id !== categoryId)
-        : [...(prevState.categories || []), categoryId]
-    }));
-  };
-  
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const newErrors: FormErrors = {};
+  useEffect(() => {
+    reset(isEdit && initialTodo ? todoToFormData(initialTodo) : emptyDefaultValues);
+  }, [initialTodo?._id, isEdit, reset]);
 
-    const trimmedTitle = title.trim();
-    if (!trimmedTitle) {
-      newErrors.title = 'Title is required';
-    }
-    if (dueDate && dueDate < getTodayMinDate()) {
-      newErrors.dueDate = 'Due date cannot be in the past. Please select today or a future date.';
-    }
-
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
-
+  const onSubmit = (data: TodoFormData) => {
+    const trimmedTitle = data.title.trim();
     const todoData: TodoFormData = {
       title: trimmedTitle,
-      description,
-      priority,
-      dueDate,
-      project: project || null,
-      categories: categories ?? [],
-      sharedWith: formData.sharedWith ?? []
+      description: data.description,
+      priority: data.priority,
+      dueDate: data.dueDate,
+      project: data.project || null,
+      categories: data.categories ?? [],
+      sharedWith: data.sharedWith ?? []
     };
-
-    dispatch(createTodo(todoData))
-      .unwrap()
-      .then(() => {
-        setFormData({
-          title: '',
-          description: '',
-          priority: 'medium',
-          dueDate: '',
-          project: null,
-          categories: [],
-          sharedWith: []
-        });
-        setErrors({});
-        onSuccess?.();
-      })
-      .catch(() => {
-        // Error handled by slice / ErrorBanner elsewhere
-      });
+    if (isEdit && initialTodo) {
+      dispatch(updateTodo({ id: initialTodo._id, todoData }))
+        .unwrap()
+        .then(() => onSuccess?.())
+        .catch(() => {});
+    } else {
+      dispatch(createTodo(todoData))
+        .unwrap()
+        .then(() => {
+          reset(emptyDefaultValues);
+          onSuccess?.();
+        })
+        .catch(() => {});
+    }
   };
-  
+
+  const validateDueDate = (value: string) => {
+    if (!value) return true;
+    if (value < getTodayMinDate()) {
+      return 'Due date cannot be in the past. Please select today or a future date.';
+    }
+    return true;
+  };
+
+  const handleCreateProject = (projectData: { name: string; description?: string; color?: string }) => {
+    setIsCreatingProject(true);
+    dispatch(createProject(projectData))
+      .unwrap()
+      .then((project) => {
+        setValue('project', project._id);
+        setAddProjectModalOpen(false);
+      })
+      .finally(() => setIsCreatingProject(false));
+  };
+
   const formContent = (
     <>
       {createError && createMessage && (
@@ -117,113 +115,148 @@ const TodoForm = ({ onCancel, onSuccess, embedded = false }: TodoFormProps) => {
           {createMessage}
         </div>
       )}
-      <form onSubmit={onSubmit} className="space-y-5" noValidate>
-        <Input
-          type="text"
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+        <Controller
           name="title"
-          id="title"
-          label="Title"
-          value={title}
-          onChange={onChange}
-          placeholder="Enter todo title"
-          required
-          error={errors.title}
+          control={control}
+          rules={{ required: 'Title is required' }}
+          render={({ field, fieldState }) => (
+            <Input
+              {...field}
+              id="title"
+              label="Title"
+              placeholder="Enter todo title"
+              required
+              error={fieldState.error?.message}
+            />
+          )}
         />
 
-        <div>
-          <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="description">
-            Description
-          </label>
-          <textarea
-            className="input-field resize-none"
-            id="description"
-            name="description"
-            value={description}
-            onChange={onChange}
-            placeholder="Enter todo description (optional)"
-            rows={4}
+        <Controller
+          name="description"
+          control={control}
+          render={({ field }) => (
+            <div>
+              <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="description">
+                Description
+              </label>
+              <textarea
+                {...field}
+                value={field.value ?? ''}
+                className="input-field resize-none"
+                id="description"
+                placeholder="Enter todo description (optional)"
+                rows={4}
+              />
+            </div>
+          )}
+        />
+
+        <div className="grid grid-cols-2 gap-4">
+          <Controller
+            name="priority"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="priority">
+                  Priority
+                </label>
+                <Dropdown
+                  id="priority"
+                  options={PRIORITY_OPTIONS}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  placeholder="Select priority"
+                  aria-label="Priority"
+                />
+              </div>
+            )}
+          />
+          <Controller
+            name="dueDate"
+            control={control}
+            rules={{ validate: validateDueDate }}
+            render={({ field, fieldState }) => (
+              <Input
+                {...field}
+                type="date"
+                id="dueDate"
+                label="Due Date"
+                min={getTodayMinDate()}
+                error={fieldState.error?.message}
+              />
+            )}
           />
         </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="priority">
-              Priority
-            </label>
-            <select
-              className="input-field"
-              id="priority"
-              name="priority"
-              value={priority}
-              onChange={onChange}
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-          </div>
-          
-          <div>
-            <Input
-              type="date"
-              name="dueDate"
-              id="dueDate"
-              label="Due Date"
-              value={dueDate}
-              min={getTodayMinDate()}
-              onChange={onChange}
-              error={errors.dueDate}
-            />
-          </div>
-        </div>
 
-        <div>
-          <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="project">
-            Project (Optional)
-          </label>
-          <select
-            className="input-field"
-            id="project"
-            name="project"
-            value={project || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, project: e.target.value || null }))}
-          >
-            <option value="">No Project</option>
-            {projects.map((proj) => (
-              <option key={proj._id} value={proj._id}>
-                {proj.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Controller
+          name="project"
+          control={control}
+          render={({ field }) => (
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <label className="block text-gray-700 text-sm font-semibold" htmlFor="project">
+                  Project (Optional)
+                </label>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setAddProjectModalOpen(true)}
+                  className="shrink-0"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Project
+                  </span>
+                </Button>
+              </div>
+              <Dropdown
+                id="project"
+                options={[
+                  { value: "", label: "No Project" },
+                  ...(projects?.map((p) => ({
+                    value: p._id,
+                    label: p.name
+                  })) || [])
+                ]}
+                value={field.value ?? null}
+                onChange={(v) => field.onChange(v || null)}
+                onBlur={field.onBlur}
+                placeholder="No Project"
+                aria-label="Project"
+              />
+            </div>
+          )}
+        />
 
         {availableCategories.length > 0 && (
-          <div>
-            <label className="block text-gray-700 text-sm font-semibold mb-2">
-              Categories (Optional)
-            </label>
-            <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg bg-gray-50">
-               <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="project">
+          <Controller
+            name="categories"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <label className="block text-gray-700 text-sm font-semibold mb-2" htmlFor="categories">
                   Categories (Optional)
                 </label>
-                <select
-                  className="input-field"
-                  id="project"
-                  name="project"
-                  value={project || ''}
-                  onChange={() => handleCategoryToggle()}
-                >
-                  <option value="">No Categories</option>
-                  {availableCategories?.map((proj) => (
-                    <option key={proj._id} value={proj._id}>
-                      {proj.name}
-                    </option>
-                  ))}
-                </select>
-                  </div>
-                </div>
-              )}
-        
+                <Dropdown
+                  id="categories"
+                  options={availableCategories?.map((c) => ({ value: c._id, label: c.name }))}
+                  value={field.value ?? []}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  multiSelect
+                  placeholder="No categories"
+                  aria-label="Categories"
+                />
+              </div>
+            )}
+          />
+        )}
+
         <div className="flex flex-col sm:flex-row gap-3">
           <Button
             type="submit"
@@ -232,10 +265,16 @@ const TodoForm = ({ onCancel, onSuccess, embedded = false }: TodoFormProps) => {
             className={onCancel ? 'sm:flex-1' : ''}
           >
             <span className="flex items-center justify-center space-x-2">
-              <span>Add Todo</span>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
+              {isEdit ? (
+                <span>Update Todo</span>
+              ) : (
+                <>
+                  <span>Add Todo</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </>
+              )}
             </span>
           </Button>
           {onCancel && (
@@ -250,6 +289,18 @@ const TodoForm = ({ onCancel, onSuccess, embedded = false }: TodoFormProps) => {
           )}
         </div>
       </form>
+
+      <Modal
+        open={addProjectModalOpen}
+        onClose={() => setAddProjectModalOpen(false)}
+        title="Add Project"
+      >
+        <ProjectForm
+          embedded
+          isLoading={isCreatingProject}
+          onSubmit={handleCreateProject}
+        />
+      </Modal>
     </>
   );
 
@@ -260,8 +311,10 @@ const TodoForm = ({ onCancel, onSuccess, embedded = false }: TodoFormProps) => {
   return (
     <div className="card bg-white/90 backdrop-blur-sm border border-gray-200">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Add New Todo</h2>
-        <p className="text-sm text-gray-500">Create a new task to stay organized</p>
+        <h2 className="text-2xl font-bold text-gray-800 mb-2">{isEdit ? 'Edit Todo' : 'Add New Todo'}</h2>
+        <p className="text-sm text-gray-500">
+          {isEdit ? 'Update your task details' : 'Create a new task to stay organized'}
+        </p>
       </div>
       {formContent}
     </div>
@@ -269,4 +322,3 @@ const TodoForm = ({ onCancel, onSuccess, embedded = false }: TodoFormProps) => {
 };
 
 export default TodoForm;
-

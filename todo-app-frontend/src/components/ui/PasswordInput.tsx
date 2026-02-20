@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent } from 'react';
+import { forwardRef, useState, type ChangeEvent } from 'react';
 import { HiOutlineEye, HiOutlineEyeOff } from 'react-icons/hi';
 
 export interface PasswordInputProps {
@@ -6,6 +6,7 @@ export interface PasswordInputProps {
   name: string;
   value: string;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
   required?: boolean;
   minLength?: number;
@@ -14,28 +15,34 @@ export interface PasswordInputProps {
   'aria-describedby'?: string;
 }
 
-const PasswordInput = ({
-  id,
-  name,
-  value,
-  onChange,
-  placeholder = 'Enter password',
-  required,
-  minLength,
-  className = '',
-  'aria-invalid': ariaInvalid,
-  'aria-describedby': ariaDescribedby
-}: PasswordInputProps) => {
+const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(function PasswordInput(
+  {
+    id,
+    name,
+    value,
+    onChange,
+    onBlur,
+    placeholder = 'Enter password',
+    required,
+    minLength,
+    className = '',
+    'aria-invalid': ariaInvalid,
+    'aria-describedby': ariaDescribedby
+  },
+  ref
+) {
   const [visible, setVisible] = useState(false);
 
   return (
     <div className="relative">
       <input
+        ref={ref}
         id={id}
         name={name}
         type={visible ? 'text' : 'password'}
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         placeholder={placeholder}
         required={required}
         minLength={minLength}
@@ -58,6 +65,6 @@ const PasswordInput = ({
       </button>
     </div>
   );
-};
+});
 
 export default PasswordInput;

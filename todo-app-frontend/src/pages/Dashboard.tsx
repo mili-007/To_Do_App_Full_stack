@@ -1,22 +1,39 @@
 import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { getProjects } from '../features/projects/projectSlice';
+import type { AppDispatch } from '../app/store';
 import { getCategories } from '../features/categories/categorySlice';
+import type { Todo } from '../types';
 import TodoForm from '../components/todos/TodoForm';
 import TodoList from '../components/todos/TodoList';
 import PageHeader from '../components/ui/PageHeader';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
-import type { AppDispatch } from '../app/store';
 
 const Dashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const [addTodoModalOpen, setAddTodoModalOpen] = useState(false);
+  const [addEditModalOpen, setAddEditModalOpen] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
 
   useEffect(() => {
     dispatch(getProjects());
     dispatch(getCategories());
   }, [dispatch]);
+
+  const openAddModal = () => {
+    setEditingTodo(null);
+    setAddEditModalOpen(true);
+  };
+
+  const openEditModal = (todo: Todo) => {
+    setEditingTodo(todo);
+    setAddEditModalOpen(true);
+  };
+
+  const closeAddEditModal = () => {
+    setAddEditModalOpen(false);
+    setEditingTodo(null);
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -30,7 +47,7 @@ const Dashboard = () => {
         <Button
           type="button"
           variant="primaryLift"
-          onClick={() => setAddTodoModalOpen(true)}
+          onClick={openAddModal}
           className="shrink-0"
         >
           <span className="flex items-center justify-center space-x-2">
@@ -43,18 +60,19 @@ const Dashboard = () => {
       </div>
 
       <Modal
-        open={addTodoModalOpen}
-        onClose={() => setAddTodoModalOpen(false)}
-        title="Add Todo"
+        open={addEditModalOpen}
+        onClose={closeAddEditModal}
+        title={editingTodo ? 'Edit Todo' : 'Add Todo'}
       >
         <TodoForm
           embedded
-          onCancel={() => setAddTodoModalOpen(false)}
-          onSuccess={() => setAddTodoModalOpen(false)}
+          initialTodo={editingTodo}
+          onCancel={closeAddEditModal}
+          onSuccess={closeAddEditModal}
         />
       </Modal>
 
-      <TodoList />
+      <TodoList onEditTodo={openEditModal} />
     </div>
   );
 };

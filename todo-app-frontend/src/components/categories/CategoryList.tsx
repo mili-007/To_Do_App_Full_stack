@@ -36,12 +36,12 @@ const CategoryList = ({ categories, isLoading, onDelete }: CategoryListProps) =>
       <div className="card bg-white/90 backdrop-blur-sm border border-gray-200">
         <h2 className="text-xl font-bold text-gray-800 mb-4">Your Categories ({categories.length})</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {categories.map((category) => (
+          {categories?.map((category) => (
             <div
               key={category._id}
               className="p-4 border border-gray-200 rounded-lg hover:border-indigo-300 hover:shadow-md transition-all duration-200 bg-white group relative"
             >
-              {/* Absolute positioned delete button */}
+              
               <button
                 onClick={() => onDelete(category._id)}
                 className="absolute top-3 right-3 text-red-400 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 transition-all duration-200 group-hover:opacity-100"

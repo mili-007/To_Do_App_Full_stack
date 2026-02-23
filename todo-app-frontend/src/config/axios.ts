@@ -1,43 +1,37 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
+// import { toast } from '../utils/toast';
+import { runUnauthorizedHandler } from './unauthorizedHandler';
 
-// Create axios instance
 const axiosInstance = axios.create();
 
-// Request interceptor to add auth token
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const userStr = localStorage.getItem('user');
-    
     if (userStr) {
       try {
         const user = JSON.parse(userStr);
-        if (user && user.token && config.headers) {
+        if (user?.token && config.headers) {
           config.headers.Authorization = `Bearer ${user.token}`;
         }
       } catch {
-        console.log("Error")
+        // ignore invalid stored user
       }
     }
-    
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle 401 errors globally
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ message?: string }>) => {
-    // Handle 401 Unauthorized errors
     if (error.response?.status === 401) {
+      // const message =
+      //   error.response?.data?.message ?? 'Session expired. Please log in again.';
+      // toast.error(message);
       localStorage.removeItem('user');
-      // window.dispatchEvent(new CustomEvent('auth:logout', { 
-      //   detail: { reason: 'token_expired' } 
-      // }));
+      runUnauthorizedHandler();
     }
-    
     return Promise.reject(error);
   }
 );

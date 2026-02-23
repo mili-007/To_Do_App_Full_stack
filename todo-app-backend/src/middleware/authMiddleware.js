@@ -1,49 +1,38 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { HTTP_STATUS, MESSAGES } = require('../constants');
 
-const protect = async (req, res, next) => {
-  let token;
+async function protect(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer')) {
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+      message: MESSAGES.NOT_AUTHORIZED_NO_TOKEN,
+    });
+  }
 
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-    try {
-      // Check if JWT_SECRET is configured
-      if (!process.env.JWT_SECRET) {
-        console.error('JWT_SECRET is not configured');
-        return res.status(500).json({ 
-          message: 'Server configuration error: JWT_SECRET is missing',
-          error: 'Please configure JWT_SECRET in your .env file'
-        });
-      }
+  const token = authHeader.split(' ')[1];
 
-      // Get token from header
-      token = req.headers.authorization.split(' ')[1];
-
-      // Verify token
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Get user from token
-      req.user = await User.findById(decoded.id).select('-password');
-
-      if (!req.user) {
-        return res.status(401).json({ message: 'User not found' });
-      }
-
-      next();
-    } catch (error) {
-      console.error('Token verification error:', error);
-      if (error.name === 'JsonWebTokenError') {
-        return res.status(401).json({ message: 'Not authorized, invalid token' });
-      }
-      if (error.name === 'TokenExpiredError') {
-        return res.status(401).json({ message: 'Not authorized, token expired' });
-      }
-      res.status(401).json({ message: 'Not authorized, token failed' });
+  try {
+    if (!process.env.JWT_SECRET) {
+      const err = new Error(MESSAGES.JWT_MISSING);
+      err.name = 'JWTSecretError';
+      return next(err);
     }
-  }
 
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select('-password');
+
+    if (!user) {
+      return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+        message: MESSAGES.USER_NOT_FOUND,
+      });
+    }
+
+    req.user = user;
+    next();
+  } catch (err) {
+    next(err);
   }
-};
+}
 
 module.exports = { protect };

@@ -164,7 +164,7 @@ export const categorySlice = createSlice({
       })
       .addCase(updateCategory.fulfilled, (state, action: PayloadAction<Category>) => {
         state.isLoading = false;
-        state.categories = state.categories.map((category) =>
+        state.categories = state.categories?.map((category) =>
           category._id === action.payload._id ? action.payload : category
         );
       })

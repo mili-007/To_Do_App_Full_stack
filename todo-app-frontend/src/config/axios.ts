@@ -15,7 +15,7 @@ axiosInstance.interceptors.request.use(
           config.headers.Authorization = `Bearer ${user.token}`;
         }
       } catch {
-        // Invalid JSON, continue without token
+        console.log("Error")
       }
     }
     

@@ -5,28 +5,22 @@ const {
   getTodos,
   createTodo,
   updateTodo,
-  deleteTodo
+  deleteTodo,
+  getComments,
+  createComment,
 } = require('../controllers/todoController');
-const { 
-  getComments, 
-  createComment 
-} = require('../controllers/commentController');
-const { protect } = require('../middleware/authMiddleware');
-
-// OPTIONS is handled at app level in server.js - no need for route-level handlers
 
 router.route('/')
-  .get(protect, getTodos)
-  .post(protect, createTodo);
+  .get(getTodos)
+  .post(createTodo);
 
 router.route('/:id')
-  .get(protect, getTodoById)
-  .put(protect, updateTodo)
-  .delete(protect, deleteTodo);
+  .get(getTodoById)
+  .put(updateTodo)
+  .delete(deleteTodo);
 
-// Comments nested under todos
 router.route('/:todoId/comments')
-  .get(protect, getComments)
-  .post(protect, createComment);
+  .get(getComments)
+  .post(createComment);
 
 module.exports = router;

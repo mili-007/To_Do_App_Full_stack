@@ -1,195 +1,37 @@
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const { validatePasswordStrength, validatePasswordForLogin } = require('../utils/passwordValidation');
+const authService = require('../services/authService');
+const apiResponse = require('../utils/apiResponse');
+const { asyncHandler } = require('../utils/errors');
+const { HTTP_STATUS } = require('../constants');
 
-// Generate JWT Token
-const generateToken = (id) => {
-  if (!process.env.JWT_SECRET) {
-    const error = new Error('JWT_SECRET is not defined in environment variables');
-    error.name = 'JWTSecretError';
-    throw error;
-  }
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRE || '7d'
+const registerUser = asyncHandler(async (req, res) => {
+  const { name, email, password } = req.body;
+  const result = await authService.register({ name, email, password });
+  return apiResponse.success(res, {
+    _id: result.user._id,
+    name: result.user.name,
+    email: result.user.email,
+    token: result.token,
+  }, HTTP_STATUS.CREATED);
+});
+
+const loginUser = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  const result = await authService.login({ email, password });
+  return apiResponse.success(res, {
+    _id: result.user._id,
+    name: result.user.name,
+    email: result.user.email,
+    token: result.token,
   });
-};
+});
 
-// Register user
-const registerUser = async (req, res) => {
-  try {
-    // Check if database is connected
-    const mongoose = require('mongoose');
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(500).json({ 
-        message: 'Database connection error',
-        error: 'Database is not connected. Please check your MONGODB_URI and ensure MongoDB is running.'
-      });
-    }
-
-  
-    // console.log('Registration request body:', { 
-    //   name: req.body?.name ? 'provided' : 'missing',
-    //   email: req.body?.email ? 'provided' : 'missing',
-    //   password: req.body?.password ? 'provided' : 'missing'
-    // });
-
-    const { name, email, password } = req.body;
-
-    // Validate input
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Please provide all fields' });
-    }
-
-    const passwordValidation = validatePasswordStrength(password);
-    if (!passwordValidation.valid) {
-      return res.status(400).json({ message: `Password must be strong: ${passwordValidation.message}` });
-    }
-
-    // Check if user exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    // Create user
-    const user = await User.create({
-      name,
-      email,
-      password
-    });
-
-    if (user) {
-      res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        token: generateToken(user._id)
-      });
-    } else {
-      res.status(400).json({ message: 'Invalid user data' });
-    }
-  } catch (error) {
-    console.error('Registration Error:', error);
-    console.error('Error Stack:', error.stack);
-    
-    // Handle specific error types
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({ message: error.message });
-    }
-    if (error.code === 11000) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-    if (error.name === 'JWTSecretError') {
-      return res.status(500).json({ 
-        message: 'Server configuration error: JWT_SECRET is missing',
-        error: 'Please configure JWT_SECRET in your .env file'
-      });
-    }
-    if (error.name === 'MongoServerError' || error.name === 'MongooseError') {
-      return res.status(500).json({ 
-        message: 'Database connection error',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Unable to connect to database'
-      });
-    }
-    
-    // Generic error response with detailed info in development
-    const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
-    res.status(500).json({ 
-      message: 'Server error',
-      error: isDevelopment ? error.message : 'An internal server error occurred',
-      errorName: isDevelopment ? error.name : undefined,
-      stack: isDevelopment ? error.stack : undefined
-    });
-  }
-};
-
-// Login user
-const loginUser = async (req, res) => {
-  try {
-    const body = req.body || {};
-    const emailVal = typeof body.email === 'string' ? body.email.trim() : '';
-    const passwordVal = typeof body.password === 'string' ? body.password : '';
-
-    const missing = [];
-    if (!emailVal) missing.push('email');
-    if (!passwordVal) missing.push('password');
-    if (missing.length > 0) {
-      const message = missing.length === 2
-        ? 'Email and password are required'
-        : `${missing[0].charAt(0).toUpperCase() + missing[0].slice(1)} is required`;
-      return res.status(400).json({ message });
-    }
-
-    const loginPasswordCheck = validatePasswordForLogin(passwordVal);
-    if (!loginPasswordCheck.valid) {
-      return res.status(400).json({ message: loginPasswordCheck.message });
-    }
-
-    const user = await User.findOne({ email: emailVal });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    const isPasswordMatch = await user.comparePassword(passwordVal);
-    if (!isPasswordMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      token: generateToken(user._id)
-    });
-  } catch (error) {
-    console.error('Login Error:', error);
-    console.error('Error Stack:', error.stack);
-    
-    if (error.name === 'JWTSecretError') {
-      return res.status(500).json({ 
-        message: 'Server configuration error: JWT_SECRET is missing',
-        error: 'Please configure JWT_SECRET in your .env file'
-      });
-    }
-    if (error.name === 'MongoServerError' || error.name === 'MongooseError') {
-      return res.status(500).json({ 
-        message: 'Database connection error',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Unable to connect to database'
-      });
-    }
-    
-    res.status(500).json({ 
-      message: 'Server error',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-};
-
-// Get user profile
-const getUserProfile = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id).select('-password');
-    res.json(user);
-  } catch (error) {
-    console.error('Get Profile Error:', error);
-    console.error('Error Stack:', error.stack);
-    
-    if (error.name === 'MongoServerError' || error.name === 'MongooseError') {
-      return res.status(500).json({ 
-        message: 'Database connection error',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Unable to connect to database'
-      });
-    }
-    
-    res.status(500).json({ 
-      message: 'Server error',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-};
+const getUserProfile = asyncHandler(async (req, res) => {
+  const user = await authService.getProfile(req.user._id);
+  return apiResponse.success(res, user);
+});
 
 module.exports = {
   registerUser,
   loginUser,
-  getUserProfile
+  getUserProfile,
 };

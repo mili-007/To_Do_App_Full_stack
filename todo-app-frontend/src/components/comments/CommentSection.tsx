@@ -1,4 +1,5 @@
-import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import { useState, useEffect } from 'react';
+import type {FormEvent, ChangeEvent } from 'react';
 import { toast } from '../../utils/toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { getComments, createComment, deleteComment } from '../../features/comments/commentSlice';

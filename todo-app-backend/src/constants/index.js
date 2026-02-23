@@ -1,8 +1,4 @@
-/**
- * Central place for HTTP status codes and common API messages.
- * Use these instead of magic numbers/strings so the code is self-documenting.
- */
-
+///// status code 
 const HTTP_STATUS = {
   OK: 200,
   CREATED: 201,
@@ -12,6 +8,8 @@ const HTTP_STATUS = {
   INTERNAL_SERVER_ERROR: 500,
 };
 
+
+//// error message common 
 const MESSAGES = {
   // Auth
   AUTH_REQUIRED: 'Please provide all fields',

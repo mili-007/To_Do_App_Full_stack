@@ -1,8 +1,3 @@
-/**
- * MongoDB connection using Mongoose.
- * Call connectDB() at startup; failures are logged and thrown so the app can handle them.
- */
-
 const mongoose = require('mongoose');
 
 const connectDB = async () => {

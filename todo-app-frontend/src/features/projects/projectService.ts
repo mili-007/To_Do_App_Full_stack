@@ -29,8 +29,9 @@ const updateProject = async (projectId: string, projectData: Partial<ProjectForm
 };
 
 // Delete project
-const deleteProject = async (projectId: string): Promise<void> => {
-  await axiosInstance.delete(`${API_URL}/${projectId}`);
+const deleteProject = async (projectId: string): Promise<any> => {
+  const response = await axiosInstance.delete(`${API_URL}/${projectId}`);
+  return response.data;
 };
 
 const projectService = {

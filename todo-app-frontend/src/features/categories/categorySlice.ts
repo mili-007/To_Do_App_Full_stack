@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import categoryService from './categoryService';
 import type { Category } from '../../types';
+import { getErrorMessage } from '../../utils/getErrorMessage';
 
 interface CategoryState {
   categories: Category[];
@@ -29,19 +30,7 @@ export const getCategories = createAsyncThunk<
     try {
       return await categoryService.getCategories();
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
@@ -57,19 +46,7 @@ export const createCategory = createAsyncThunk<
     try {
       return await categoryService.createCategory(categoryData);
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
@@ -85,48 +62,23 @@ export const updateCategory = createAsyncThunk<
     try {
       return await categoryService.updateCategory(id, categoryData);
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
 
 // Delete category
 export const deleteCategory = createAsyncThunk<
-  string,
+  { message: string },
   string,
   { rejectValue: string }
 >(
   'categories/delete',
   async (id, thunkAPI) => {
     try {
-      await categoryService.deleteCategory(id);
-      return id;
+      return await categoryService.deleteCategory(id);
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
@@ -168,10 +120,10 @@ export const categorySlice = createSlice({
           category._id === action.payload._id ? action.payload : category
         );
       })
-      .addCase(deleteCategory.fulfilled, (state, action: PayloadAction<string>) => {
+      .addCase(deleteCategory.fulfilled, (state) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.categories = state.categories.filter((category) => category._id !== action.payload);
+        // state.categories = state.categories.filter((category) => category._id !== id);
       });
   }
 });

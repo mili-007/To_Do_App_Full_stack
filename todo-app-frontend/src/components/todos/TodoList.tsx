@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from '../../utils/toast';
 import { useDispatch, useSelector } from 'react-redux';
-import { getTodos, reset, updateTodo, deleteTodo } from '../../features/todos/todoSlice';
+import { getTodos, reset, updateTodo, deleteTodo, getTodoById, setFilterProjectId } from '../../features/todos/todoSlice';
+import { getProject, clearSelectedProject } from '../../features/projects/projectSlice';
 import type { AppDispatch, RootState } from '../../app/store';
 import { getComments } from '../../features/comments/commentSlice';
 import type { Todo } from '../../types';
@@ -32,20 +33,28 @@ const groupByPriority = (todos: Todo[]): Record<string, Todo[]> => {
 };
 
 interface TodoListProps {
-  /** When provided, Edit button opens Add/Edit modal with this todo instead of inline edit */
   onEditTodo?: (todo: Todo) => void;
 }
 
 const TodoList = ({ onEditTodo }: TodoListProps) => {
   const dispatch = useDispatch<AppDispatch>();
+
   const [viewTodoId, setViewTodoId] = useState<string | null>(null);
   const deleteConfirm = useDeleteConfirm<string>();
 
-  const { todos, isLoading, isError, message } = useSelector((state: RootState) => state.todos);
+  const { todos, isLoading, isError, message, selectedTodo, filterProjectId } = useSelector((state: RootState) => state.todos);
+  const { selectedProject } = useSelector((state: RootState) => state.projects);
   const { user } = useSelector((state: RootState) => state.auth);
 
-  const byPriority = useMemo(() => groupByPriority(todos), [todos]);
-  const viewTodo = viewTodoId ? todos.find((t) => t._id === viewTodoId) ?? null : null;
+  const filteredTodos = useMemo(() => {
+    if (!filterProjectId) return todos;
+    return todos?.filter((todo) => {
+      const pId = typeof todo.project === 'object' ? todo.project?._id : todo.project;
+      return pId === filterProjectId;
+    });
+  }, [todos, filterProjectId]);
+
+  const byPriority = useMemo(() => groupByPriority(filteredTodos), [filteredTodos]);
 
   const handleEditFromView = (todo: Todo) => {
     setViewTodoId(null);
@@ -53,7 +62,10 @@ const TodoList = ({ onEditTodo }: TodoListProps) => {
   };
 
   useEffect(() => {
-    if (viewTodoId) dispatch(getComments(viewTodoId));
+    if (viewTodoId) {
+      dispatch(getComments(viewTodoId));
+      dispatch(getTodoById(viewTodoId));
+    }
   }, [viewTodoId, dispatch]);
 
   useEffect(() => {
@@ -75,9 +87,14 @@ const TodoList = ({ onEditTodo }: TodoListProps) => {
   }, [isError, message, dispatch]);
 
   useEffect(() => {
-    if (user) dispatch(getTodos());
+    if (user) dispatch(getTodos(filterProjectId || undefined));
+    if (filterProjectId) {
+      dispatch(getProject(filterProjectId));
+    } else {
+      dispatch(clearSelectedProject());
+    }
     return () => { dispatch(reset()); };
-  }, [user, dispatch]);
+  }, [user, dispatch, filterProjectId]);
 
   const handleDeleteConfirm = () => {
     if (deleteConfirm.target === null) return;
@@ -85,9 +102,9 @@ const TodoList = ({ onEditTodo }: TodoListProps) => {
     deleteConfirm.close();
     dispatch(deleteTodo(id))
       .unwrap()
-      .then(() => {
-        toast.success('Todo deleted');
-        setViewTodoId(null);
+      .then((payload) => {
+        toast.success(payload?.message || 'Todo deleted');
+        dispatch(getTodos(filterProjectId || undefined))
       })
       .catch((err: string) => toast.error(err || 'Failed to delete todo'));
   };
@@ -102,15 +119,34 @@ const TodoList = ({ onEditTodo }: TodoListProps) => {
 
   return (
     <div className="min-h-[320px]">
-      {todos.length === 0 ? (
+      {selectedProject && (
+        <div className="mb-6 flex items-center justify-between bg-indigo-50 border border-indigo-100 rounded-lg px-4 py-3">
+          <div className="flex items-center space-x-3">
+            <div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: selectedProject.color }}
+            />
+            <span className="text-sm font-medium text-indigo-900">
+              Filtering by project: <span className="font-bold">{selectedProject.name}</span>
+            </span>
+          </div>
+          <button
+            onClick={() => dispatch(setFilterProjectId(null))}
+            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 uppercase tracking-wider"
+          >
+            Clear Filter
+          </button>
+        </div>
+      )}
+      {filteredTodos.length === 0 ? (
         <EmptyState
           icon={
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
           }
-          title="No todos found"
-          subtitle="Add your first todo to get started!"
+          title={filterProjectId ? "No todos found for this project" : "No todos found"}
+          subtitle={filterProjectId ? "Try clearing the filter or adding a new task!" : "Add your first todo to get started!"}
         />
       ) : (
         <div className="space-y-3">
@@ -162,22 +198,24 @@ const TodoList = ({ onEditTodo }: TodoListProps) => {
         onClose={() => setViewTodoId(null)}
         title="Todo Details"
       >
-        {!viewTodo ? (
-          <p className="text-gray-500">Todo not found.</p>
+        {!selectedTodo ? (
+          <div className="flex justify-center py-10">
+            <LoadingSpinner />
+          </div>
         ) : (
           <div className="space-y-6">
             <TodoDetailView
-              todo={viewTodo}
-              onUpdate={(todoData) => dispatch(updateTodo({ id: viewTodo._id, todoData }))}
-              onDelete={() => deleteConfirm.requestDelete(viewTodo._id)}
-              onEdit={onEditTodo ? () => handleEditFromView(viewTodo) : undefined}
+              todo={selectedTodo}
+              onUpdate={(todoData) => dispatch(updateTodo({ id: selectedTodo._id, todoData }))}
+              onDelete={() => deleteConfirm.requestDelete(selectedTodo._id)}
+              onEdit={onEditTodo ? () => handleEditFromView(selectedTodo) : undefined}
               isOwner={
-                typeof viewTodo.user === 'object'
-                  ? viewTodo.user._id === user?._id
-                  : viewTodo.user === user?._id
+                typeof selectedTodo.user === 'object'
+                  ? selectedTodo.user._id === user?._id
+                  : selectedTodo.user === user?._id
               }
             />
-            <CommentSection todoId={viewTodo._id} />
+            <CommentSection todoId={selectedTodo._id} />
           </div>
         )}
       </Modal>

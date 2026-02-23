@@ -5,14 +5,17 @@ import type { Todo, TodoFormData } from '../../types';
 const API_URL = API_ENDPOINTS.TODOS;
 
 // Get all todos
-const getTodos = async (): Promise<Todo[]> => {
-  const response = await axiosInstance.get<Todo[]>(API_URL);
+const getTodos = async (projectId?: string): Promise<Todo[]> => {
+  const response = await axiosInstance.get<Todo[]>(API_URL, {
+    params: projectId ? { project: projectId } : {}
+  });
   return response.data;
 };
 
 // Get a single todo by ID
 const getTodoById = async (todoId: string): Promise<Todo> => {
   const response = await axiosInstance.get<Todo>(`${API_URL}/${todoId}`);
+  console.log(response.data, "++++++++")
   return response.data;
 };
 
@@ -29,8 +32,9 @@ const updateTodo = async (todoId: string, todoData: Partial<TodoFormData> & { co
 };
 
 // Delete todo
-const deleteTodo = async (todoId: string): Promise<void> => {
-  await axiosInstance.delete(`${API_URL}/${todoId}`);
+const deleteTodo = async (todoId: string): Promise<{ message: string }> => {
+  const response = await axiosInstance.delete<{ message: string }>(`${API_URL}/${todoId}`);
+  return response.data;
 };
 
 const todoService = {

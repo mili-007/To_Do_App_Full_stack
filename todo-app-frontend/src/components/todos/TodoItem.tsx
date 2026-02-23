@@ -1,7 +1,6 @@
-import { Link } from 'react-router-dom';
 import { toast } from '../../utils/toast';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateTodo, deleteTodo } from '../../features/todos/todoSlice';
+import { updateTodo, deleteTodo, getTodos } from '../../features/todos/todoSlice';
 import type { AppDispatch, RootState } from '../../app/store';
 import type { TodoItemProps } from '../../types';
 import { PRIORITY_BADGE_CLASSES } from '../../constants/todo';
@@ -25,7 +24,10 @@ const TodoItem = ({ todo, onView, onEdit }: TodoItemProps) => {
     deleteConfirm.close();
     dispatch(deleteTodo(deleteConfirm.target))
       .unwrap()
-      .then(() => toast.success('Todo deleted'))
+      .then((payload) => {
+        toast.success(payload?.message || 'Todo deleted');
+        dispatch(getTodos());
+      })
       .catch((err: string) => toast.error(err || 'Failed to delete todo'));
   };
 
@@ -53,20 +55,14 @@ const TodoItem = ({ todo, onView, onEdit }: TodoItemProps) => {
           className="h-4 w-4 shrink-0 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer"
         />
         <div className="flex-1 min-w-0">
-          {onView ? (
-            <button
-              type="button"
-              onClick={() => onView(todo)}
-              className="text-left w-full block group"
-            >
-              <p
-                className={`text-sm font-medium text-gray-800 truncate ${todo.completed ? 'line-through text-gray-400' : ''} group-hover:text-indigo-600`}
-                title={todo.title}
-              >
-                {todo.title}
-              </p>
-            </button>
-          ) : (
+          {/* {onView ? ( */}
+          <p
+            className={`text-sm font-medium text-gray-800 truncate ${todo.completed ? 'line-through text-gray-400' : ''} group-hover:text-indigo-600`}
+            title={todo.title}
+          >
+            {todo.title}
+          </p>
+          {/* ) : (
             <Link to={`/todos/${todo._id}`} className="block group">
               <p
                 className={`text-sm font-medium text-gray-800 truncate ${todo.completed ? 'line-through text-gray-400' : ''} group-hover:text-indigo-600`}
@@ -75,7 +71,7 @@ const TodoItem = ({ todo, onView, onEdit }: TodoItemProps) => {
                 {todo.title}
               </p>
             </Link>
-          )}
+          )} */}
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className={`badge text-[10px] px-1.5 py-0 ${PRIORITY_BADGE_CLASSES[todo.priority]}`}>
               {todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)}

@@ -7,7 +7,7 @@ import TodoDetailView from '../components/todos/TodoDetailView';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { getComments } from '../features/comments/commentSlice';
-import { clearSelectedTodo, deleteTodo, getTodoById, updateTodo } from '../features/todos/todoSlice';
+import { clearSelectedTodo, deleteTodo, getTodoById, updateTodo, getTodos } from '../features/todos/todoSlice';
 import { useDeleteConfirm } from '../hooks/useDeleteConfirm';
 import type { TodoDetailUpdatePayload } from '../types';
 import { toast } from '../utils/toast';
@@ -54,8 +54,9 @@ const TodoDetailPage = () => {
     deleteConfirm.close();
     dispatch(deleteTodo(deleteConfirm.target))
       .unwrap()
-      .then(() => {
-        toast.success('Todo deleted');
+      .then((payload) => {
+        toast.success(payload?.message || 'Todo deleted');
+        dispatch(getTodos());
         navigate('/dashboard');
       })
       .catch((err: string) => toast.error(err || 'Failed to delete todo'));
@@ -76,7 +77,7 @@ const TodoDetailPage = () => {
         onConfirm={handleDeleteConfirm}
         onCancel={deleteConfirm.close}
       />
-    
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <TodoDetailView
@@ -96,9 +97,8 @@ const TodoDetailPage = () => {
               <div>
                 <span className="text-sm text-gray-600">Status:</span>
                 <span
-                  className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
-                    selectedTodo.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                  }`}
+                  className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${selectedTodo.completed ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                    }`}
                 >
                   {selectedTodo.completed ? 'Completed' : 'Pending'}
                 </span>

@@ -145,6 +145,8 @@ export interface TodoState {
   isSuccess: boolean;
   isLoading: boolean;
   message: string;
+  getTodoOnId: string;
+  filterProjectId: string | null;
 }
 
 export interface TodoFormData {

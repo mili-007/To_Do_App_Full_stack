@@ -41,7 +41,10 @@ const CategoriesPage = () => {
     deleteConfirm.close();
     dispatch(deleteCategory(id))
       .unwrap()
-      .then(() => toast.success('Category removed'))
+      .then(() => {
+        // toast.success('Category removed');
+        dispatch(getCategories());
+      })
       .catch((err: string) => toast.error(err || 'Failed to delete category'));
   };
 

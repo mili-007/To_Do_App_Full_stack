@@ -29,8 +29,9 @@ const updateCategory = async (categoryId: string, categoryData: Partial<Category
 };
 
 // Delete category
-const deleteCategory = async (categoryId: string): Promise<void> => {
-  await axiosInstance.delete(`${API_URL}/${categoryId}`);
+const deleteCategory = async (categoryId: string): Promise<{ message: string }> => {
+  const response = await axiosInstance.delete<{ message: string }>(`${API_URL}/${categoryId}`);
+  return response.data;
 };
 
 const categoryService = {

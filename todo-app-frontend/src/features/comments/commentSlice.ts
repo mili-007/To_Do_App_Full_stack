@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import commentService from './commentService';
 import type { Comment } from '../../types';
+import { getErrorMessage } from '../../utils/getErrorMessage';
 
 interface CommentState {
   comments: Record<string, Comment[]>; // Keyed by todoId
@@ -30,19 +31,7 @@ export const getComments = createAsyncThunk<
       const comments = await commentService.getComments(todoId);
       return { todoId, comments };
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
@@ -59,19 +48,7 @@ export const createComment = createAsyncThunk<
       const comment = await commentService.createComment(todoId, { content });
       return { todoId, comment };
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
@@ -87,19 +64,7 @@ export const updateComment = createAsyncThunk<
     try {
       return await commentService.updateComment(id, { content });
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
@@ -116,19 +81,7 @@ export const deleteComment = createAsyncThunk<
       await commentService.deleteComment(commentId);
       return { todoId, commentId };
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );

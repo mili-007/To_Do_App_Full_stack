@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import todoService from './todoService';
 import type { Todo, TodoState, TodoFormData } from '../../types';
+import { getErrorMessage } from '../../utils/getErrorMessage';
 
 const initialState: TodoState = {
   todos: [],
@@ -8,33 +9,23 @@ const initialState: TodoState = {
   isError: false,
   isSuccess: false,
   isLoading: false,
-  message: ''
+  message: '',
+  getTodoOnId: '',
+  filterProjectId: null
 };
 
 // Get todos
 export const getTodos = createAsyncThunk<
   Todo[],
-  void,
+  string | undefined,
   { rejectValue: string }
 >(
   'todos/getAll',
-  async (_, thunkAPI) => {
+  async (projectId, thunkAPI) => {
     try {
-      return await todoService.getTodos();
+      return await todoService.getTodos(projectId);
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
@@ -50,19 +41,7 @@ export const getTodoById = createAsyncThunk<
     try {
       return await todoService.getTodoById(id);
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
@@ -78,19 +57,7 @@ export const createTodo = createAsyncThunk<
     try {
       return await todoService.createTodo(todoData);
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
@@ -98,7 +65,7 @@ export const createTodo = createAsyncThunk<
 // Update todo
 interface UpdateTodoPayload {
   id: string;
-  todoData: Partial<TodoFormData> & { 
+  todoData: Partial<TodoFormData> & {
     completed?: boolean;
     project?: string | null;
     categories?: string[];
@@ -116,48 +83,23 @@ export const updateTodo = createAsyncThunk<
     try {
       return await todoService.updateTodo(id, todoData);
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
 
 // Delete todo
 export const deleteTodo = createAsyncThunk<
-  string,
+  { message: string },
   string,
   { rejectValue: string }
 >(
   'todos/delete',
   async (id, thunkAPI) => {
     try {
-      await todoService.deleteTodo(id);
-      return id;
+      return await todoService.deleteTodo(id);
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
@@ -174,6 +116,9 @@ export const todoSlice = createSlice({
     },
     clearSelectedTodo: (state) => {
       state.selectedTodo = null;
+    },
+    setFilterProjectId: (state, action: PayloadAction<string | null>) => {
+      state.filterProjectId = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -182,6 +127,7 @@ export const todoSlice = createSlice({
         state.isLoading = true;
       })
       .addCase(getTodos.fulfilled, (state, action: PayloadAction<Todo[]>) => {
+        console.log(action?.payload, "******* to do all *****")
         state.isLoading = false;
         state.isSuccess = true;
         state.todos = action.payload;
@@ -196,6 +142,7 @@ export const todoSlice = createSlice({
         state.selectedTodo = null;
       })
       .addCase(getTodoById.fulfilled, (state, action: PayloadAction<Todo>) => {
+        console.log(action.payload, "action.payload")
         state.isLoading = false;
         state.selectedTodo = action.payload;
       })
@@ -220,24 +167,25 @@ export const todoSlice = createSlice({
       })
       .addCase(updateTodo.fulfilled, (state, action: PayloadAction<Todo>) => {
         state.isLoading = false;
-        state.todos = state.todos.map((todo) =>
+        state.todos = state.todos?.map((todo) =>
           todo._id === action.payload._id ? action.payload : todo
         );
         if (state.selectedTodo?._id === action.payload._id) {
           state.selectedTodo = action.payload;
         }
       })
-      .addCase(deleteTodo.fulfilled, (state, action: PayloadAction<string>) => {
+      .addCase(deleteTodo.fulfilled, (state) => {
         state.isLoading = false;
         state.isSuccess = true;
-        state.todos = state.todos.filter((todo) => todo._id !== action.payload);
-        if (state.selectedTodo?._id === action.payload) {
-          state.selectedTodo = null;
-        }
-      });
+      })
+      .addCase(deleteTodo.rejected, (state, action) => {
+        state.isLoading = false;
+        state.isError = true;
+        state.message = action.payload || 'Failed to delete todo';
+      })
   }
 });
 
-export const { reset, clearSelectedTodo } = todoSlice.actions;
+export const { reset, clearSelectedTodo, setFilterProjectId } = todoSlice.actions;
 export default todoSlice.reducer;
 

@@ -28,12 +28,13 @@ const TodoDetailView = ({ todo, onUpdate, onDelete, onEdit, isOwner }: TodoDetai
   const { reset } = useForm<TodoEditFormValues>({ defaultValues: getEditDefaultValues(todo) });
   const dispatch = useDispatch<AppDispatch>();
 
+
   useEffect(() => {
     if (isEditing) {
       reset(getEditDefaultValues(todo));
     }
   }, [isEditing]);
-  
+
   const toggleComplete = () => {
     onUpdate({ completed: !todo.completed });
   };
@@ -72,7 +73,7 @@ const TodoDetailView = ({ todo, onUpdate, onDelete, onEdit, isOwner }: TodoDetai
         </div>
         {isOwner && (
           <div className="flex space-x-2">
-             <Button
+            <Button
               type="button"
               variant="ghost"
               size="icon"
@@ -114,12 +115,12 @@ const TodoDetailView = ({ todo, onUpdate, onDelete, onEdit, isOwner }: TodoDetai
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Project</span>
             {todo.project ? (
               <>
-              <span  
-                className="inline-block text-sm px-2 py-1 rounded-full text-white font-small"
-                style={{ backgroundColor: typeof todo.project === 'object' ? todo.project.color : '#3B82F6' }}>
+                <span
+                  className="inline-block text-sm px-2 py-1 rounded-full text-white font-small"
+                  style={{ backgroundColor: typeof todo.project === 'object' ? todo.project.color : '#3B82F6' }}>
                   {typeof todo.project === 'object' ? todo.project.name : ''}
                 </span>
-                </>
+              </>
             ) : (
               <span className="text-sm text-gray-400">No project</span>
             )}
@@ -131,13 +132,13 @@ const TodoDetailView = ({ todo, onUpdate, onDelete, onEdit, isOwner }: TodoDetai
                 {todo.categories
                   .filter((cat): cat is NonNullable<typeof cat> => cat != null)
                   .map((cat) => (
-                    <span  
+                    <span
                       className="inline-block text-sm px-2 py-1 rounded-full text-white font-small"
                       style={{ backgroundColor: typeof cat === 'object' ? cat.color : '#3B82F6' }}>
-                        {typeof cat === 'object' ? cat.name : ''}
+                      {typeof cat === 'object' ? cat.name : ''}
                     </span>
                   ))}
-                  </>
+              </>
             ) : (
               <span className="text-sm text-gray-400">No categories</span>
             )}

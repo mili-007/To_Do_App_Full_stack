@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import projectService from './projectService';
 import type { Project } from '../../types';
+import { getErrorMessage } from '../../utils/getErrorMessage';
 
 interface ProjectState {
   projects: Project[];
@@ -8,6 +9,7 @@ interface ProjectState {
   isSuccess: boolean;
   isLoading: boolean;
   message: string;
+  selectedProject: Project | null;
 }
 
 const initialState: ProjectState = {
@@ -15,8 +17,25 @@ const initialState: ProjectState = {
   isError: false,
   isSuccess: false,
   isLoading: false,
-  message: ''
+  message: '',
+  selectedProject: null
 };
+
+// Get single project
+export const getProject = createAsyncThunk<
+  Project,
+  string,
+  { rejectValue: string }
+>(
+  'projects/getOne',
+  async (id, thunkAPI) => {
+    try {
+      return await projectService.getProject(id);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
 
 // Get projects
 export const getProjects = createAsyncThunk<
@@ -29,19 +48,7 @@ export const getProjects = createAsyncThunk<
     try {
       return await projectService.getProjects();
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
@@ -57,19 +64,7 @@ export const createProject = createAsyncThunk<
     try {
       return await projectService.createProject(projectData);
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
@@ -85,19 +80,7 @@ export const updateProject = createAsyncThunk<
     try {
       return await projectService.updateProject(id, projectData);
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
@@ -111,22 +94,9 @@ export const deleteProject = createAsyncThunk<
   'projects/delete',
   async (id, thunkAPI) => {
     try {
-      await projectService.deleteProject(id);
-      return id;
+      return await projectService.deleteProject(id);
     } catch (error) {
-      const message = (
-        error instanceof Error &&
-        'response' in error &&
-        error.response &&
-        typeof error.response === 'object' &&
-        'data' in error.response &&
-        error.response.data &&
-        typeof error.response.data === 'object' &&
-        'message' in error.response.data &&
-        typeof error.response.data.message === 'string'
-      ) ? error.response.data.message : 
-      (error instanceof Error ? error.message : String(error));
-      return thunkAPI.rejectWithValue(message);
+      return thunkAPI.rejectWithValue(getErrorMessage(error));
     }
   }
 );
@@ -140,6 +110,9 @@ export const projectSlice = createSlice({
       state.isSuccess = false;
       state.isError = false;
       state.message = '';
+    },
+    clearSelectedProject: (state) => {
+      state.selectedProject = null;
     }
   },
   extraReducers: (builder) => {
@@ -172,10 +145,14 @@ export const projectSlice = createSlice({
         state.isLoading = false;
         state.isSuccess = true;
         state.projects = state.projects.filter((project) => project._id !== action.payload);
+      })
+      .addCase(getProject.fulfilled, (state, action: PayloadAction<Project>) => {
+        state.isLoading = false;
+        state.selectedProject = action.payload;
       });
   }
 });
 
-export const { reset } = projectSlice.actions;
+export const { reset, clearSelectedProject } = projectSlice.actions;
 export default projectSlice.reducer;
 

@@ -41,7 +41,10 @@ const ProjectsPage = () => {
     deleteConfirm.close();
     dispatch(deleteProject(id))
       .unwrap()
-      .then(() => toast.success('Project removed'))
+      .then(() => {
+        // toast.success('Project removed');
+        dispatch(getProjects());
+      })
       .catch((err: string) => toast.error(err || 'Failed to delete project'));
   };
 

@@ -2,6 +2,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import authService from './authService';
 import type { User, LoginData, RegisterData, AuthState } from '../../types';
+import { getErrorMessage } from '../../utils/getErrorMessage';
 
 // Get user from localStorage
 const getUserFromStorage = (): User | null => {
@@ -35,16 +36,7 @@ export const register = createAsyncThunk<
     try {
       return await authService.register(userData);
     } catch (error: any) {
-      // Handle axios errors with response data
-      if (error.response?.data) {
-        const errorData = error.response.data;
-        const message = errorData.message || errorData.error || 'Registration failed';
-        console.error('Registration error:', message);
-        console.error('Full error response:', errorData);
-        return thunkAPI.rejectWithValue(message);
-      }
-      // Handle network errors or other errors
-      const message = error.message || 'Registration failed';
+      const message = getErrorMessage(error, 'Registration failed');
       console.error('Registration error:', message);
       return thunkAPI.rejectWithValue(message);
     }
@@ -62,16 +54,7 @@ export const login = createAsyncThunk<
     try {
       return await authService.login(userData);
     } catch (error: any) {
-      // Handle axios errors with response data
-      if (error.response?.data) {
-        const errorData = error.response.data;
-        const message = errorData.message || errorData.error || 'Login failed';
-        console.error('Login error:', message);
-        console.error('Full error response:', errorData);
-        return thunkAPI.rejectWithValue(message);
-      }
-      // Handle network errors or other errors
-      const message = error.message || 'Login failed';
+      const message = getErrorMessage(error, 'Login failed');
       console.error('Login error:', message);
       return thunkAPI.rejectWithValue(message);
     }

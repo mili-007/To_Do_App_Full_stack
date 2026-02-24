@@ -10,7 +10,8 @@ const getTodoById = asyncHandler(async (req, res) => {
 });
 
 const getTodos = asyncHandler(async (req, res) => {
-  const todos = await todoService.getAll(req.user._id);
+  const { project } = req.query;
+  const todos = await todoService.getAll(req.user._id, project);
   return apiResponse.success(res, todos);
 });
 

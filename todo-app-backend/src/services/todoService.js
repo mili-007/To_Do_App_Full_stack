@@ -50,10 +50,14 @@ async function getById(todoId, userId) {
   return todo;
 }
 
-async function getAll(userId) {
-  return Todo.find({
+async function getAll(userId, projectId) {
+  const query = {
     $or: [{ user: userId }, { sharedWith: userId }],
-  })
+  };
+  if (projectId) {
+    query.project = projectId;
+  }
+  return Todo.find(query)
     .populate(POPULATE_TODO)
     .sort('-createdAt');
 }

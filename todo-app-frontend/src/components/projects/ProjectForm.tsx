@@ -22,7 +22,7 @@ const ProjectForm = ({ onSubmit, isLoading, embedded = false }: ProjectFormProps
   };
 
   const form = (
-    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4" noValidate>
         <Controller
           name="name"
           control={control}

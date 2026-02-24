@@ -22,7 +22,7 @@ const CategoryForm = ({ onSubmit, isLoading, embedded = false }: CategoryFormPro
   };
 
   const form = (
-    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4" noValidate>
         <Controller
           name="name"
           control={control}

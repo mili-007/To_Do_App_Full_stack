@@ -11,7 +11,7 @@ function errorHandler(err, req, res, next) {
 
   const dev = isDevelopment();
 
-  // Our own AppError: use its statusCode and message
+  // statusCode and message
   if (err instanceof AppError) {
     const body = { message: err.message };
     if (dev && err.stack) body.stack = err.stack;
@@ -37,7 +37,7 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  // Mongo duplicate key (e.g. duplicate email)
+  // Mongo duplicate key (duplicate email)
   if (err.code === 11000) {
     return res.status(HTTP_STATUS.BAD_REQUEST).json({
       message: MESSAGES.USER_ALREADY_EXISTS,
@@ -52,7 +52,7 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  // JWT secret missing (thrown from auth code)
+  // JWT secret missing 
   if (err.name === 'JWTSecretError') {
     return res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       message: MESSAGES.JWT_MISSING,
@@ -60,7 +60,7 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  // Unknown error: log and return generic message
+  // Unknown error and return generic message
   console.error('Error:', err.message);
   if (dev) console.error(err.stack);
 

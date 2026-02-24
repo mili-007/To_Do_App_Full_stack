@@ -103,6 +103,19 @@ async function update(todoId, userId, payload) {
     sharedWith,
   } = payload;
 
+  ////// restrict todo is completed
+  if (todo.completed && completed === undefined) {
+    throw new AppError('Cannot update a completed todo. Unmark it first.', HTTP_STATUS.BAD_REQUEST);
+  }
+
+  if (todo.completed && completed === true) {
+    const otherFields = [title, description, priority, dueDate, project, categories, sharedWith];
+    if (otherFields.some(f => f !== undefined)) {
+      throw new AppError('Cannot update fields of a completed todo.', HTTP_STATUS.BAD_REQUEST);
+    }
+  }
+
+
   if (title !== undefined) {
     const trimmed = typeof title === 'string' ? title.trim() : '';
     if (!trimmed) throw new AppError(MESSAGES.TITLE_REQUIRED, HTTP_STATUS.BAD_REQUEST);

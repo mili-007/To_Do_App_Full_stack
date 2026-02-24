@@ -1,11 +1,28 @@
+import { useState } from 'react';
 import { PRIORITY_BADGE_CLASSES } from '../../constants/todo';
 import type { TodoDetailViewProps } from '../../types';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import Button from '../ui/Button';
+import { FiEdit } from 'react-icons/fi';
+import { HiOutlineTrash } from 'react-icons/hi';
 
-const TodoDetailView = ({ todo, onUpdate }: TodoDetailViewProps) => {
+
+const TodoDetailView = ({ todo, onUpdate, onDelete, onEdit }: TodoDetailViewProps) => {
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
 
   const toggleComplete = () => {
-    onUpdate({ completed: !todo.completed });
+    if (!todo.completed) {
+      setShowCompleteConfirm(true);
+    } else {
+      onUpdate({ completed: false });
+    }
   };
+
+  const handleConfirmComplete = () => {
+    setShowCompleteConfirm(false);
+    onUpdate({ completed: true });
+  };
+
 
 
   return (
@@ -29,7 +46,41 @@ const TodoDetailView = ({ todo, onUpdate }: TodoDetailViewProps) => {
             </p>
           )}
         </div>
+        <div className="flex space-x-2">
+          {onEdit && !todo.completed && (
+            <>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onEdit}
+              title="Edit todo"
+            >
+              <FiEdit className="w-5 h-5" />
+            </Button>
+          <Button
+            variant="ghostDanger"
+            size="icon"
+            onClick={onDelete}
+            title="Delete todo"
+          >
+            <HiOutlineTrash className="w-5 h-5" />
+          </Button>
+          </>
+          )}
+        </div>
       </div>
+
+      <ConfirmDialog
+        open={showCompleteConfirm}
+        title="Complete task"
+        message="Are you sure you want to mark this task as completed? You won't be able to edit it afterwards."
+        confirmLabel="Complete"
+        variant="warning"
+        onConfirm={handleConfirmComplete}
+        onCancel={() => setShowCompleteConfirm(false)}
+      />
+
+
 
       <div className="space-y-4 mb-6 pb-6 border-b border-gray-200">
         <div className="flex flex-wrap items-center gap-3">
@@ -62,15 +113,15 @@ const TodoDetailView = ({ todo, onUpdate }: TodoDetailViewProps) => {
           </div>
           <div>
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Categories</span>
-            {todo.categories && todo.categories.length > 0  ? (
+            {todo.categories && todo.categories.length > 0 ? (
               <>
                 {todo.categories?.map((cat) => (
-                    <span
-                      className="inline-block text-sm px-2 py-1 rounded-full text-white font-small"
-                      style={{ backgroundColor: typeof cat === 'object' ? cat.color : '#3B82F6' }}>
-                      {typeof cat === 'object' ? cat.name : ''}
-                    </span>
-                  ))}
+                  <span
+                    className="inline-block text-sm px-2 py-1 rounded-full text-white font-small"
+                    style={{ backgroundColor: typeof cat === 'object' ? cat.color : '#3B82F6' }}>
+                    {typeof cat === 'object' ? cat.name : ''}
+                  </span>
+                ))}
               </>
             ) : (
               <span className="text-sm text-gray-400">No categories</span>

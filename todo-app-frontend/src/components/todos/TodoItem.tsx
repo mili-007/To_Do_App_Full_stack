@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { FiEdit } from 'react-icons/fi';
+
 import { HiOutlineEye, HiOutlineTrash } from 'react-icons/hi';
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '../../app/store';
@@ -15,6 +17,8 @@ const TodoItem = ({ todo, onView, onEdit }: TodoItemProps) => {
   // const { user } = useSelector((state: RootState) => state.auth);
 
   const deleteConfirm = useDeleteConfirm<string>();
+  const [showCompleteConfirm, setShowCompleteConfirm] = useState(false);
+
 
   const handleDeleteConfirm = () => {
     if (deleteConfirm.target === null) return;
@@ -29,8 +33,20 @@ const TodoItem = ({ todo, onView, onEdit }: TodoItemProps) => {
   };
 
   const toggleComplete = () => {
-    dispatch(updateTodo({ id: todo._id, todoData: { completed: !todo.completed } }));
+    // If we are marking it as completed, show confirmation
+    if (!todo.completed) {
+      setShowCompleteConfirm(true);
+    } else {
+      // If unmarking, just do it (or we could also confirm, but usually completing is the critical step)
+      dispatch(updateTodo({ id: todo._id, todoData: { completed: false } }));
+    }
   };
+
+  const handleConfirmComplete = () => {
+    setShowCompleteConfirm(false);
+    dispatch(updateTodo({ id: todo._id, todoData: { completed: true } }));
+  };
+
 
   const cardClass = `rounded-lg border bg-white shadow-sm transition-all duration-200 ${todo.completed ? 'bg-gray-50 border-gray-200 opacity-75' : 'border-gray-200 hover:border-indigo-300'} p-3`;
 
@@ -44,6 +60,17 @@ const TodoItem = ({ todo, onView, onEdit }: TodoItemProps) => {
         onConfirm={handleDeleteConfirm}
         onCancel={deleteConfirm.close}
       />
+      <ConfirmDialog
+        open={showCompleteConfirm}
+        title="Complete task"
+        message="Are you sure you want to mark this task as completed? You won't be able to edit it afterwards."
+        confirmLabel="Complete"
+        variant="warning"
+        onConfirm={handleConfirmComplete}
+        onCancel={() => setShowCompleteConfirm(false)}
+      />
+
+
       <div className="flex items-center gap-2">
         <input
           type="checkbox"
@@ -86,28 +113,31 @@ const TodoItem = ({ todo, onView, onEdit }: TodoItemProps) => {
               <HiOutlineEye className="w-4 h-4 text-indigo-600" aria-hidden />
             </Button>
           )}
-              {onEdit && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="!p-1"
-                  onClick={() => onEdit(todo)}
-                  title="Edit todo"
-                >
-                  <FiEdit className="w-4 h-4" aria-hidden />
-                </Button>
-              )}
-              <Button
-                type="button"
-                variant="ghostDanger"
-                size="icon"
-                className="!p-1"
-                onClick={() => deleteConfirm.requestDelete(todo._id)}
-                title="Delete todo"
-              >
-                <HiOutlineTrash className="w-4 h-4" aria-hidden />
-              </Button>
+          {onEdit && !todo.completed && (
+            <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="!p-1"
+              onClick={() => onEdit(todo)}
+              title="Edit todo"
+            >
+              <FiEdit className="w-4 h-4" aria-hidden />
+            </Button>
+
+             <Button
+            type="button"
+            variant="ghostDanger"
+            size="icon"
+            className="!p-1"
+            onClick={() => deleteConfirm.requestDelete(todo._id)}
+            title="Delete todo"
+          >
+            <HiOutlineTrash className="w-4 h-4" aria-hidden />
+          </Button>
+          </>
+          )}
         </div>
       </div>
     </div>

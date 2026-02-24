@@ -6,7 +6,7 @@ export interface ConfirmDialogProps {
   message: string;
   confirmLabel?: string;
   cancelLabel?: string;
-  variant?: 'danger' | 'default';
+  variant?: 'danger' | 'warning' | 'default';
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -36,10 +36,19 @@ const ConfirmDialog = ({
 
   if (!open) return null;
 
-  const confirmButtonClass =
-    variant === 'danger'
-      ? 'btn-danger'
-      : 'btn-primary';
+  const getConfirmButtonClass = () => {
+    switch (variant) {
+      case 'danger':
+        return 'btn-danger';
+      case 'warning':
+        return 'btn-warning';
+      default:
+        return 'btn-primary';
+    }
+  };
+
+  const confirmButtonClass = getConfirmButtonClass();
+
 
   return (
     <div

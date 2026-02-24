@@ -23,7 +23,7 @@ class Database {
         socketTimeoutMS: 45000,                   ///////// 45 seconds for data getting/passing 
       });
 
-      console.log(`${JSON.stringify(this.conn.connection)} MongoDB Connected: ${this.conn.connection.host}`);
+      // console.log(`MongoDB Connected: ${this.conn.connection.host}`);
       console.log(`Database: ${this.conn.connection.name}`);
       return this.conn;
     } catch (error) {

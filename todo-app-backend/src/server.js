@@ -6,8 +6,6 @@ const errorHandler = require('./middleware/errorHandler');
 
 dotenv.config();
 
-validateEnv();
-
 const app = express();
 
 app.use(corsMiddleware);
@@ -30,13 +28,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-function validateEnv() {
-  const required = ['MONGODB_URI', 'JWT_SECRET'];
-  const missing = required.filter((key) => !process.env[key]);
-  if (missing.length > 0) {
-    console.error('Missing required environment variables:', missing.join(', '));
-    console.error('Set MONGODB_URI and JWT_SECRET in .env');
-    process.exit(1);
-  }
-}

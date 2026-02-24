@@ -46,7 +46,7 @@ const ProjectList = ({ projects, isLoading, onDelete }: ProjectListProps) => {
   return (
     <div className="space-y-4">
       <div className="card bg-white/90 backdrop-blur-sm border border-gray-200">
-        <h2 className="text-xl font-bold text-gray-800 mb-4">Your Projects ({projects.length})</h2>
+        <h2 className="text-xl font-bold text-gray-800 mb-4">Projects ({projects.length})</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {projects?.map((project) => (
             <div

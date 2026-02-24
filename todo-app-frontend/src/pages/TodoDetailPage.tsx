@@ -7,7 +7,7 @@ import TodoDetailView from '../components/todos/TodoDetailView';
 import ConfirmDialog from '../components/ui/ConfirmDialog';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { getComments } from '../features/comments/commentSlice';
-import { clearSelectedTodo, deleteTodo, getTodoById, updateTodo, getTodos } from '../features/todos/todoSlice';
+import { clearSelectedTodo, deleteTodo, getTodoById, getTodos, updateTodo } from '../features/todos/todoSlice';
 import { useDeleteConfirm } from '../hooks/useDeleteConfirm';
 import type { TodoDetailUpdatePayload } from '../types';
 import { toast } from '../utils/toast';
@@ -17,7 +17,6 @@ const TodoDetailPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { selectedTodo, isLoading } = useSelector((state: RootState) => state.todos);
-  const { user } = useSelector((state: RootState) => state.auth);
   const deleteConfirm = useDeleteConfirm<string>();
 
   useEffect(() => {
@@ -62,11 +61,6 @@ const TodoDetailPage = () => {
       .catch((err: string) => toast.error(err || 'Failed to delete todo'));
   };
 
-  const isOwner =
-    typeof selectedTodo.user === 'object'
-      ? selectedTodo.user._id === user?._id
-      : selectedTodo.user === user?._id;
-
   return (
     <div>
       <ConfirmDialog
@@ -84,7 +78,6 @@ const TodoDetailPage = () => {
             todo={selectedTodo}
             onUpdate={handleUpdate}
             onDelete={() => deleteConfirm.requestDelete(selectedTodo._id)}
-            isOwner={isOwner}
           />
           <div className="mt-6">
             <CommentSection todoId={selectedTodo._id} />

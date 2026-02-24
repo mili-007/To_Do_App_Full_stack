@@ -17,8 +17,7 @@ const ProjectForm = ({ onSubmit, isLoading, embedded = false }: ProjectFormProps
   } = useForm<ProjectFormValues>({ defaultValues });
 
   const onFormSubmit = (data: ProjectFormValues) => {
-    const trimmedName = data.name.trim();
-    onSubmit({ name: trimmedName, description: data.description || undefined, color: data.color });
+    onSubmit({ name: data.name, description: data.description || undefined, color: data.color });
     reset(defaultValues);
   };
 

@@ -1,5 +1,4 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
-// import { toast } from '../utils/toast';
 import { runUnauthorizedHandler } from './unauthorizedHandler';
 
 const axiosInstance = axios.create();
@@ -14,7 +13,7 @@ axiosInstance.interceptors.request.use(
           config.headers.Authorization = `Bearer ${user.token}`;
         }
       } catch {
-        // ignore invalid stored user
+        console.log("ignore invalid stored user")
       }
     }
     return config;
@@ -25,10 +24,8 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ message?: string }>) => {
+    //// 401 for unauthorized or someone do change in local // 
     if (error.response?.status === 401) {
-      // const message =
-      //   error.response?.data?.message ?? 'Session expired. Please log in again.';
-      // toast.error(message);
       localStorage.removeItem('user');
       runUnauthorizedHandler();
     }

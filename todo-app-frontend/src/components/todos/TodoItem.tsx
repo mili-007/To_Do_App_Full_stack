@@ -1,21 +1,18 @@
-import { toast } from '../../utils/toast';
-import { useDispatch, useSelector } from 'react-redux';
-import { updateTodo, deleteTodo, getTodos } from '../../features/todos/todoSlice';
-import type { AppDispatch, RootState } from '../../app/store';
-import type { TodoItemProps } from '../../types';
-import { PRIORITY_BADGE_CLASSES } from '../../constants/todo';
-import { HiOutlineEye, HiOutlineTrash } from 'react-icons/hi';
 import { FiEdit } from 'react-icons/fi';
-import ConfirmDialog from '../ui/ConfirmDialog';
-import Button from '../ui/Button';
+import { HiOutlineEye, HiOutlineTrash } from 'react-icons/hi';
+import { useDispatch } from 'react-redux';
+import type { AppDispatch } from '../../app/store';
+import { PRIORITY_BADGE_CLASSES } from '../../constants/todo';
+import { deleteTodo, getTodos, updateTodo } from '../../features/todos/todoSlice';
 import { useDeleteConfirm } from '../../hooks/useDeleteConfirm';
+import type { TodoItemProps } from '../../types';
+import { toast } from '../../utils/toast';
+import Button from '../ui/Button';
+import ConfirmDialog from '../ui/ConfirmDialog';
 
 const TodoItem = ({ todo, onView, onEdit }: TodoItemProps) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { user } = useSelector((state: RootState) => state.auth);
-
-  const isOwner =
-    typeof todo.user === 'object' ? todo.user._id === user?._id : todo.user === user?._id;
+  // const { user } = useSelector((state: RootState) => state.auth);
 
   const deleteConfirm = useDeleteConfirm<string>();
 
@@ -55,23 +52,12 @@ const TodoItem = ({ todo, onView, onEdit }: TodoItemProps) => {
           className="h-4 w-4 shrink-0 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer"
         />
         <div className="flex-1 min-w-0">
-          {/* {onView ? ( */}
           <p
             className={`text-sm font-medium text-gray-800 truncate ${todo.completed ? 'line-through text-gray-400' : ''} group-hover:text-indigo-600`}
             title={todo.title}
           >
             {todo.title}
           </p>
-          {/* ) : (
-            <Link to={`/todos/${todo._id}`} className="block group">
-              <p
-                className={`text-sm font-medium text-gray-800 truncate ${todo.completed ? 'line-through text-gray-400' : ''} group-hover:text-indigo-600`}
-                title={todo.title}
-              >
-                {todo.title}
-              </p>
-            </Link>
-          )} */}
           <div className="flex items-center gap-2 mt-1 flex-wrap">
             <span className={`badge text-[10px] px-1.5 py-0 ${PRIORITY_BADGE_CLASSES[todo.priority]}`}>
               {todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)}
@@ -100,8 +86,6 @@ const TodoItem = ({ todo, onView, onEdit }: TodoItemProps) => {
               <HiOutlineEye className="w-4 h-4 text-indigo-600" aria-hidden />
             </Button>
           )}
-          {isOwner && (
-            <>
               {onEdit && (
                 <Button
                   type="button"
@@ -124,8 +108,6 @@ const TodoItem = ({ todo, onView, onEdit }: TodoItemProps) => {
               >
                 <HiOutlineTrash className="w-4 h-4" aria-hidden />
               </Button>
-            </>
-          )}
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type {FormEvent, ChangeEvent } from 'react';
+import type { FormEvent, ChangeEvent } from 'react';
 import { toast } from '../../utils/toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { getComments, createComment, deleteComment } from '../../features/comments/commentSlice';
@@ -45,7 +45,9 @@ const CommentSection = ({ todoId }: CommentSectionProps) => {
     deleteConfirm.close();
     dispatch(deleteComment({ todoId, commentId }))
       .unwrap()
-      .then(() => toast.success('Comment deleted'))
+      .then(() => {
+        dispatch(getComments(todoId));
+      })
       .catch((err: string) => toast.error(err || 'Failed to delete comment'));
   };
 

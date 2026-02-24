@@ -123,7 +123,6 @@ export const categorySlice = createSlice({
       .addCase(deleteCategory.fulfilled, (state) => {
         state.isLoading = false;
         state.isSuccess = true;
-        // state.categories = state.categories.filter((category) => category._id !== id);
       });
   }
 });

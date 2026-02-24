@@ -120,23 +120,12 @@ export const commentSlice = createSlice({
         }
         state.comments[action.payload.todoId].push(action.payload.comment);
       })
-      .addCase(updateComment.fulfilled, (state, action: PayloadAction<Comment>) => {
+      .addCase(updateComment.fulfilled, (state) => {
         state.isLoading = false;
-        // Find and update comment in all todos
-        Object.keys(state.comments).forEach(todoId => {
-          state.comments[todoId] = state.comments[todoId].map(comment =>
-            comment._id === action.payload._id ? action.payload : comment
-          );
-        });
       })
-      .addCase(deleteComment.fulfilled, (state, action: PayloadAction<{ todoId: string; commentId: string }>) => {
+      .addCase(deleteComment.fulfilled, (state) => {
         state.isLoading = false;
         state.isSuccess = true;
-        if (state.comments[action.payload.todoId]) {
-          state.comments[action.payload.todoId] = state.comments[action.payload.todoId].filter(
-            comment => comment._id !== action.payload.commentId
-          );
-        }
       });
   }
 });

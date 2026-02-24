@@ -1,54 +1,12 @@
-import { useEffect, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { FiEdit } from 'react-icons/fi';
-import { HiOutlineTrash } from 'react-icons/hi';
-import { useDispatch } from 'react-redux';
-import type { AppDispatch } from '../../app/store';
 import { PRIORITY_BADGE_CLASSES } from '../../constants/todo';
-import { getCategories } from '../../features/categories/categorySlice';
-import { getProjects } from '../../features/projects/projectSlice';
-import type { Todo, TodoDetailViewProps, TodoEditFormValues } from '../../types';
-import Button from '../ui/Button';
+import type { TodoDetailViewProps } from '../../types';
 
-function getEditDefaultValues(todo: Todo): TodoEditFormValues {
-  return {
-    title: todo.title,
-    description: todo.description || '',
-    priority: todo.priority,
-    dueDate: todo.dueDate ? todo.dueDate.split('T')[0] : '',
-    project: typeof todo.project === 'object' ? todo?.project?._id ?? null : (todo.project || null),
-    categories: Array.isArray(todo.categories)
-      ? todo.categories.map((cat) => (typeof cat === 'object' ? cat._id : cat)).filter(Boolean)
-      : []
-  };
-}
-
-const TodoDetailView = ({ todo, onUpdate, onDelete, onEdit, isOwner }: TodoDetailViewProps) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const { reset } = useForm<TodoEditFormValues>({ defaultValues: getEditDefaultValues(todo) });
-  const dispatch = useDispatch<AppDispatch>();
-
-
-  useEffect(() => {
-    if (isEditing) {
-      reset(getEditDefaultValues(todo));
-    }
-  }, [isEditing]);
+const TodoDetailView = ({ todo, onUpdate }: TodoDetailViewProps) => {
 
   const toggleComplete = () => {
     onUpdate({ completed: !todo.completed });
   };
 
-  const startEditing = () => {
-    dispatch(getProjects());
-    dispatch(getCategories());
-    setIsEditing(true);
-  };
-
-  const handleEditClick = () => {
-    if (onEdit) onEdit();
-    else startEditing();
-  };
 
   return (
     <div className="card bg-white/90 backdrop-blur-sm border border-gray-200">
@@ -71,29 +29,6 @@ const TodoDetailView = ({ todo, onUpdate, onDelete, onEdit, isOwner }: TodoDetai
             </p>
           )}
         </div>
-        {isOwner && (
-          <div className="flex space-x-2">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="!p-1"
-              onClick={handleEditClick}
-              title="View details"
-            >
-              <FiEdit className="w-4 h-4" aria-hidden />
-            </Button>
-            <Button
-              type="button"
-              variant="ghostDanger"
-              size="icon"
-              onClick={onDelete}
-              title="Delete todo"
-            >
-              <HiOutlineTrash className="w-4 h-4" aria-hidden />
-            </Button>
-          </div>
-        )}
       </div>
 
       <div className="space-y-4 mb-6 pb-6 border-b border-gray-200">
@@ -127,11 +62,9 @@ const TodoDetailView = ({ todo, onUpdate, onDelete, onEdit, isOwner }: TodoDetai
           </div>
           <div>
             <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-1">Categories</span>
-            {todo.categories && todo.categories.filter((c): c is NonNullable<typeof c> => c != null).length > 0 ? (
+            {todo.categories && todo.categories.length > 0  ? (
               <>
-                {todo.categories
-                  .filter((cat): cat is NonNullable<typeof cat> => cat != null)
-                  .map((cat) => (
+                {todo.categories?.map((cat) => (
                     <span
                       className="inline-block text-sm px-2 py-1 rounded-full text-white font-small"
                       style={{ backgroundColor: typeof cat === 'object' ? cat.color : '#3B82F6' }}>

@@ -21,7 +21,7 @@ const emptyDefaultValues: TodoFormData = {
   dueDate: '',
   project: null,
   categories: [],
-  sharedWith: []
+  // sharedWith: []
 };
 
 function todoToFormData(todo: Todo): TodoFormData {
@@ -34,9 +34,9 @@ function todoToFormData(todo: Todo): TodoFormData {
     categories: Array.isArray(todo.categories)
       ? todo.categories.map((c) => (c != null && typeof c === 'object' ? c._id : c)).filter(Boolean) as string[]
       : [],
-    sharedWith: Array.isArray(todo.sharedWith)
-      ? todo.sharedWith.map((u) => (typeof u === 'object' ? u._id : u)).filter(Boolean)
-      : []
+    // sharedWith: Array.isArray(todo.sharedWith)
+    //   ? todo.sharedWith.map((u) => (typeof u === 'object' ? u._id : u)).filter(Boolean)
+    //   : []
   };
 }
 
@@ -71,7 +71,7 @@ const TodoForm = ({ initialTodo = null, onCancel, onSuccess, embedded = false }:
       dueDate: data.dueDate,
       project: data.project || null,
       categories: data.categories ?? [],
-      sharedWith: data.sharedWith ?? []
+      // sharedWith: data.sharedWith ?? []
     };
     if (isEdit && initialTodo) {
       dispatch(updateTodo({ id: initialTodo._id, todoData }))

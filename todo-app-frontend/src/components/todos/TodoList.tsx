@@ -209,11 +209,6 @@ const TodoList = ({ onEditTodo }: TodoListProps) => {
               onUpdate={(todoData) => dispatch(updateTodo({ id: selectedTodo._id, todoData }))}
               onDelete={() => deleteConfirm.requestDelete(selectedTodo._id)}
               onEdit={onEditTodo ? () => handleEditFromView(selectedTodo) : undefined}
-              isOwner={
-                typeof selectedTodo.user === 'object'
-                  ? selectedTodo.user._id === user?._id
-                  : selectedTodo.user === user?._id
-              }
             />
             <CommentSection todoId={selectedTodo._id} />
           </div>

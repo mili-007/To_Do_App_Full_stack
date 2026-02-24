@@ -44,10 +44,10 @@ const MESSAGES = {
   DUE_DATE_PAST: 'Due date cannot be in the past. Please select today or a future date.',
 
   // Success
-  TODO_REMOVED: 'Todo removed',
-  PROJECT_REMOVED: 'Project removed',
-  CATEGORY_REMOVED: 'Category removed',
-  COMMENT_REMOVED: 'Comment removed',
+  TODO_REMOVED: 'Todo Deleted',
+  PROJECT_REMOVED: 'Project Deleted',
+  CATEGORY_REMOVED: 'Category Deleted',
+  COMMENT_REMOVED: 'Comment Deleted',
 };
 
 module.exports = {

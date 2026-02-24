@@ -19,15 +19,15 @@ const AppRoutes = () => {
     <Routes>
       <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
       <Route element={<AuthRouteLayout />}>
-        <Route path="login" element={<LoginPage />} />
-        <Route path="register" element={<RegisterPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
       </Route>
       <Route element={<PrivateRoute />}>
         <Route element={<Layout />}>
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="projects" element={<ProjectsPage />} />
-          <Route path="categories" element={<CategoriesPage />} />
-          <Route path="todos/:id" element={<TodoDetailPage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/categories" element={<CategoriesPage />} />
+          <Route path="/todos/:id" element={<TodoDetailPage />} />
         </Route>
       </Route>
       <Route path="*" element={<NotFoundPage />} />

@@ -1,32 +1,51 @@
 const projectService = require('../services/projectService');
 const apiResponse = require('../utils/apiResponse');
-const { asyncHandler } = require('../utils/errors');
 const { HTTP_STATUS, MESSAGES } = require('../constants');
 
-const getProjects = asyncHandler(async (req, res) => {
-  const projects = await projectService.getAll(req.user._id);
-  return apiResponse.success(res, projects);
-});
+const getProjects = async (req, res, next) => {
+  try {
+    const projects = await projectService.getAll(req.user._id);
+    return apiResponse.success(res, projects);
+  } catch (error) {
+    next(error);
+  }
+};
 
-const getProject = asyncHandler(async (req, res) => {
-  const project = await projectService.getById(req.params.id, req.user._id);
-  return apiResponse.success(res, project);
-});
+const getProject = async (req, res, next) => {
+  try {
+    const project = await projectService.getById(req.params.id, req.user._id);
+    return apiResponse.success(res, project);
+  } catch (error) {
+    next(error);
+  }
+};
 
-const createProject = asyncHandler(async (req, res) => {
-  const project = await projectService.create(req.user._id, req.body);
-  return apiResponse.success(res, project, HTTP_STATUS.CREATED);
-});
+const createProject = async (req, res, next) => {
+  try {
+    const project = await projectService.create(req.user._id, req.body);
+    return apiResponse.success(res, project, HTTP_STATUS.CREATED);
+  } catch (error) {
+    next(error);
+  }
+};
 
-const updateProject = asyncHandler(async (req, res) => {
-  const project = await projectService.update(req.params.id, req.user._id, req.body);
-  return apiResponse.success(res, project);
-});
+const updateProject = async (req, res, next) => {
+  try {
+    const project = await projectService.update(req.params.id, req.user._id, req.body);
+    return apiResponse.success(res, project);
+  } catch (error) {
+    next(error);
+  }
+};
 
-const deleteProject = asyncHandler(async (req, res) => {
-  await projectService.remove(req.params.id, req.user._id);
-  return apiResponse.success(res, { message: MESSAGES.PROJECT_REMOVED });
-});
+const deleteProject = async (req, res, next) => {
+  try {
+    await projectService.remove(req.params.id, req.user._id);
+    return apiResponse.success(res, { message: MESSAGES.PROJECT_REMOVED });
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
   getProjects,

@@ -14,10 +14,10 @@ function hasTodoAccess(todo, userId) {
 async function getCommentsByTodo(todoId, userId) {
   const todo = await Todo.findById(todoId);
   if (!todo) {
-    throw new AppError(MESSAGES.TODO_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    throw AppError(MESSAGES.TODO_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   if (!hasTodoAccess(todo, userId)) {
-    throw new AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
+    throw AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
   }
   return Comment.find({ todo: todoId })
     .populate('user', 'name email')
@@ -29,14 +29,14 @@ async function getCommentsByTodo(todoId, userId) {
 async function create(todoId, userId, content) {
   const trimmed = typeof content === 'string' ? content.trim() : '';
   if (!trimmed) {
-    throw new AppError(MESSAGES.COMMENT_CONTENT_REQUIRED, HTTP_STATUS.BAD_REQUEST);
+    throw AppError(MESSAGES.COMMENT_CONTENT_REQUIRED, HTTP_STATUS.BAD_REQUEST);
   }
   const todo = await Todo.findById(todoId);
   if (!todo) {
-    throw new AppError(MESSAGES.TODO_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    throw AppError(MESSAGES.TODO_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   if (!hasTodoAccess(todo, userId)) {
-    throw new AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
+    throw AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
   }
   const comment = await Comment.create({
     content: trimmed,
@@ -52,14 +52,14 @@ async function create(todoId, userId, content) {
 async function update(commentId, userId, content) {
   const comment = await Comment.findById(commentId);
   if (!comment) {
-    throw new AppError(MESSAGES.COMMENT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    throw AppError(MESSAGES.COMMENT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   if (comment.user.toString() !== userId.toString()) {
-    throw new AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
+    throw AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
   }
   if (content !== undefined) {
     const trimmed = typeof content === 'string' ? content.trim() : '';
-    if (!trimmed) throw new AppError(MESSAGES.COMMENT_CONTENT_REQUIRED, HTTP_STATUS.BAD_REQUEST);
+    if (!trimmed) throw AppError(MESSAGES.COMMENT_CONTENT_REQUIRED, HTTP_STATUS.BAD_REQUEST);
     comment.content = trimmed;
   }
   await comment.save();
@@ -72,10 +72,10 @@ async function update(commentId, userId, content) {
 async function remove(commentId, userId) {
   const comment = await Comment.findById(commentId);
   if (!comment) {
-    throw new AppError(MESSAGES.COMMENT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    throw AppError(MESSAGES.COMMENT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   if (comment.user.toString() !== userId.toString()) {
-    throw new AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
+    throw AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
   }
   await comment.deleteOne();
 }

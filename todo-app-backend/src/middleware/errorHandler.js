@@ -1,5 +1,4 @@
 const { HTTP_STATUS, MESSAGES } = require('../constants');
-const { AppError } = require('../utils/errors');
 
 const isDevelopment = () =>
   process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
@@ -12,7 +11,7 @@ function errorHandler(err, req, res, next) {
   const dev = isDevelopment();
 
   // statusCode and message
-  if (err instanceof AppError) {
+  if (err.name === 'AppError') {
     const body = { message: err.message };
     if (dev && err.stack) body.stack = err.stack;
     return res.status(err.statusCode).json(body);

@@ -20,10 +20,10 @@ async function getAll(userId) {
 async function getById(projectId, userId) {
   const project = await Project.findById(projectId).populate('user', 'name email');
   if (!project) {
-    throw new AppError(MESSAGES.PROJECT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    throw AppError(MESSAGES.PROJECT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   if (project.user._id.toString() !== userId.toString()) {
-    throw new AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
+    throw AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
   }
   const todos = await Todo.find({ project: project._id })
     .populate('user', 'name email')
@@ -39,7 +39,7 @@ async function create(userId, payload) {
   const { name, description, color } = payload;
   const trimmedName = trimString(name);
   if (!trimmedName) {
-    throw new AppError(MESSAGES.PROJECT_NAME_REQUIRED, HTTP_STATUS.BAD_REQUEST);
+    throw AppError(MESSAGES.PROJECT_NAME_REQUIRED, HTTP_STATUS.BAD_REQUEST);
   }
   return Project.create({
     user: userId,
@@ -54,16 +54,16 @@ async function create(userId, payload) {
 async function update(projectId, userId, payload) {
   const project = await Project.findById(projectId);
   if (!project) {
-    throw new AppError(MESSAGES.PROJECT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    throw AppError(MESSAGES.PROJECT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   if (project.user.toString() !== userId.toString()) {
-    throw new AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
+    throw AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
   }
 
   const { name, description, color } = payload;
   if (name !== undefined) {
     const trimmed = trimString(name);
-    if (!trimmed) throw new AppError(MESSAGES.PROJECT_NAME_REQUIRED, HTTP_STATUS.BAD_REQUEST);
+    if (!trimmed) throw AppError(MESSAGES.PROJECT_NAME_REQUIRED, HTTP_STATUS.BAD_REQUEST);
     project.name = trimmed;
   }
   if (description !== undefined) project.description = trimString(description);
@@ -77,10 +77,10 @@ async function update(projectId, userId, payload) {
 async function remove(projectId, userId) {
   const project = await Project.findById(projectId);
   if (!project) {
-    throw new AppError(MESSAGES.PROJECT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    throw AppError(MESSAGES.PROJECT_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   if (project.user.toString() !== userId.toString()) {
-    throw new AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
+    throw AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
   }
   await Todo.updateMany({ project: project._id }, { $unset: { project: 1 } });
   await project.deleteOne();

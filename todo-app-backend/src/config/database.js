@@ -1,37 +1,33 @@
 const mongoose = require('mongoose');
 
-/////// Class creating for check connection ////
-class Database {
-  constructor() {
-    this.conn = null;
+// This variable will store the connection once it's established
+let conn = null;
+
+async function connectDB() {
+  // If we already have a connection, return it immediately (Caching)
+  if (conn) {
+    return conn;
   }
 
-  ///// function for connection /////
-  async connect() {
-    if (this.conn) {
-      return this.conn;
-    }
+  // Check if the URI is configured
+  if (!process.env.MONGODB_URI) {
+    console.error('MONGODB_URI is not set in .env');
+    throw new Error('MONGODB_URI is not configured');
+  }
 
-    if (!process.env.MONGODB_URI) {
-      console.error('MONGODB_URI is not set in .env');
-      throw new Error('MONGODB_URI is not configured');
-    }
+  try {
+    // Attempt to connect to MongoDB
+    conn = await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
 
-    try {
-      this.conn = await mongoose.connect(process.env.MONGODB_URI, {
-        serverSelectionTimeoutMS: 5000,            ////////////// wait 5 second to connection with server  
-        socketTimeoutMS: 45000,                   ///////// 45 seconds for data getting/passing 
-      });
-
-      // console.log(`MongoDB Connected: ${this.conn.connection.host}`);
-      console.log(`Database: ${this.conn.connection.name}`);
-      return this.conn;
-    } catch (error) {
-      console.error('Database connection error:', error.message);
-      throw error;
-    }
+    console.log(`Database: ${conn.connection.name}`);
+    return conn;
+  } catch (error) {
+    console.error('Database connection error:', error.message);
+    throw error;
   }
 }
 
-const dbInstance = new Database();
-module.exports = dbInstance.connect.bind(dbInstance);
+module.exports = connectDB;

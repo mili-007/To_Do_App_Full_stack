@@ -7,17 +7,16 @@ const { HTTP_STATUS, MESSAGES } = require('../constants');
 
 /////// generate token function
 function generateToken(userId) {
-  if (!process.env.JWT_SECRET) {
-    const err = new Error(MESSAGES.JWT_MISSING);
-    err.name = 'JWTSecretError';
-    throw err;
+  const secretKey = process.env.JWT_SECRET;
+  const expireTime = process.env.JWT_EXPIRE || '7d';
+  // secret key check
+  if (!secretKey) {
+    throw AppError(MESSAGES.JWT_MISSING, HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
-  return jwt.sign(
-    { id: userId },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRE || '7d' }
-  );
+  //// token create with ID and secret key
+  return jwt.sign({ id: userId }, secretKey, { expiresIn: expireTime });
 }
+
 
 ///// common function sanitize user's data and pass that as a response
 function sanitizeUser(user) {
@@ -31,12 +30,12 @@ function sanitizeUser(user) {
 /////// Register API function 
 async function register({ name, email, password }) {
   if (!name || !email || !password) {
-    throw new AppError(MESSAGES.AUTH_REQUIRED, HTTP_STATUS.BAD_REQUEST);
+    throw AppError(MESSAGES.AUTH_REQUIRED, HTTP_STATUS.BAD_REQUEST);
   }
 
   const passwordValidation = validatePasswordStrength(password);
   if (!passwordValidation.valid) {
-    throw new AppError(
+    throw AppError(
       `Password must be strong: ${passwordValidation.message}`,
       HTTP_STATUS.BAD_REQUEST
     );
@@ -44,7 +43,7 @@ async function register({ name, email, password }) {
 
   const existing = await User.findOne({ email });
   if (existing) {
-    throw new AppError(MESSAGES.USER_ALREADY_EXISTS, HTTP_STATUS.BAD_REQUEST);
+    throw AppError(MESSAGES.USER_ALREADY_EXISTS, HTTP_STATUS.BAD_REQUEST);
   }
 
   const user = await User.create({ name, email, password });
@@ -67,22 +66,22 @@ async function login({ email, password }) {
       missing.length === 2
         ? MESSAGES.EMAIL_PASSWORD_REQUIRED
         : `${missing[0].charAt(0).toUpperCase() + missing[0].slice(1)} is required`;
-    throw new AppError(msg, HTTP_STATUS.BAD_REQUEST);
+    throw AppError(msg, HTTP_STATUS.BAD_REQUEST);
   }
 
   const loginPasswordCheck = validatePasswordForLogin(passwordVal);
   if (!loginPasswordCheck.valid) {
-    throw new AppError(loginPasswordCheck.message, HTTP_STATUS.BAD_REQUEST);
+    throw AppError(loginPasswordCheck.message, HTTP_STATUS.BAD_REQUEST);
   }
 
   const user = await User.findOne({ email: emailVal });
   if (!user) {
-    throw new AppError(MESSAGES.INVALID_CREDENTIALS, HTTP_STATUS.BAD_REQUEST);
+    throw AppError(MESSAGES.INVALID_CREDENTIALS, HTTP_STATUS.BAD_REQUEST);
   }
 
   const isMatch = await user.comparePassword(passwordVal);
   if (!isMatch) {
-    throw new AppError(MESSAGES.INVALID_CREDENTIALS, HTTP_STATUS.BAD_REQUEST);
+    throw AppError(MESSAGES.INVALID_CREDENTIALS, HTTP_STATUS.BAD_REQUEST);
   }
 
   return {
@@ -95,7 +94,7 @@ async function login({ email, password }) {
 async function getProfile(userId) {
   const user = await User.findById(userId).select('-password');
   if (!user) {
-    throw new AppError(MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    throw AppError(MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   return user;
 }

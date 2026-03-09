@@ -42,10 +42,10 @@ function hasAccessByRefs(todo, userId) {
 async function getById(todoId, userId) {
   const todo = await Todo.findById(todoId).populate(POPULATE_TODO);
   if (!todo) {
-    throw new AppError(MESSAGES.TODO_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    throw AppError(MESSAGES.TODO_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   if (!hasAccess(todo, userId)) {
-    throw new AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
+    throw AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
   }
   return todo;
 }
@@ -66,10 +66,10 @@ async function create(userId, payload) {
   const { title, description, priority, dueDate, project, categories, sharedWith } = payload;
   const trimmedTitle = typeof title === 'string' ? title.trim() : '';
   if (!trimmedTitle) {
-    throw new AppError(MESSAGES.TITLE_REQUIRED, HTTP_STATUS.BAD_REQUEST);
+    throw AppError(MESSAGES.TITLE_REQUIRED, HTTP_STATUS.BAD_REQUEST);
   }
   if (isDueDateInPast(dueDate)) {
-    throw new AppError(MESSAGES.DUE_DATE_PAST, HTTP_STATUS.BAD_REQUEST);
+    throw AppError(MESSAGES.DUE_DATE_PAST, HTTP_STATUS.BAD_REQUEST);
   }
 
   const todo = await Todo.create({
@@ -89,10 +89,10 @@ async function create(userId, payload) {
 async function update(todoId, userId, payload) {
   const todo = await Todo.findById(todoId);
   if (!todo) {
-    throw new AppError(MESSAGES.TODO_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    throw AppError(MESSAGES.TODO_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   if (!hasAccessByRefs(todo, userId)) {
-    throw new AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
+    throw AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
   }
 
   const isOwner = todo.user.toString() === userId.toString();
@@ -107,22 +107,10 @@ async function update(todoId, userId, payload) {
     sharedWith,
   } = payload;
 
-  ////// restrict todo is completed
-  if (todo.completed && completed === undefined) {
-    throw new AppError('Cannot update a completed todo. Unmark it first.', HTTP_STATUS.BAD_REQUEST);
-  }
-
-  if (todo.completed && completed === true) {
-    const otherFields = [title, description, priority, dueDate, project, categories, sharedWith];
-    if (otherFields.some(f => f !== undefined)) {
-      throw new AppError('Cannot update fields of a completed todo.', HTTP_STATUS.BAD_REQUEST);
-    }
-  }
-
 
   if (title !== undefined) {
     const trimmed = typeof title === 'string' ? title.trim() : '';
-    if (!trimmed) throw new AppError(MESSAGES.TITLE_REQUIRED, HTTP_STATUS.BAD_REQUEST);
+    if (!trimmed) throw AppError(MESSAGES.TITLE_REQUIRED, HTTP_STATUS.BAD_REQUEST);
     todo.title = trimmed;
   }
   if (description !== undefined) todo.description = description;
@@ -132,7 +120,7 @@ async function update(todoId, userId, payload) {
   if (dueDate !== undefined) {
     const hasNewDate = dueDate !== null && dueDate !== '';
     if (hasNewDate && isDueDateInPast(dueDate)) {
-      throw new AppError(MESSAGES.DUE_DATE_PAST, HTTP_STATUS.BAD_REQUEST);
+      throw AppError(MESSAGES.DUE_DATE_PAST, HTTP_STATUS.BAD_REQUEST);
     }
     todo.dueDate = hasNewDate ? dueDate : null;
   }
@@ -152,10 +140,10 @@ async function update(todoId, userId, payload) {
 async function remove(todoId, userId) {
   const todo = await Todo.findById(todoId);
   if (!todo) {
-    throw new AppError(MESSAGES.TODO_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    throw AppError(MESSAGES.TODO_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   if (todo.user.toString() !== userId.toString()) {
-    throw new AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
+    throw AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
   }
   await Comment.deleteMany({ todo: todo._id });
   await todo.deleteOne();

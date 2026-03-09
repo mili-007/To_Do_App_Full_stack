@@ -16,10 +16,10 @@ async function getAll(userId) {
 async function getById(categoryId, userId) {
   const category = await Category.findById(categoryId);
   if (!category) {
-    throw new AppError(MESSAGES.CATEGORY_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    throw AppError(MESSAGES.CATEGORY_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   if (category.user.toString() !== userId.toString()) {
-    throw new AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
+    throw AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
   }
   const todos = await Todo.find({
     categories: category._id,
@@ -38,11 +38,11 @@ async function create(userId, payload) {
   const { name, color } = payload;
   const trimmedName = trimString(name);
   if (!trimmedName) {
-    throw new AppError(MESSAGES.CATEGORY_NAME_REQUIRED, HTTP_STATUS.BAD_REQUEST);
+    throw AppError(MESSAGES.CATEGORY_NAME_REQUIRED, HTTP_STATUS.BAD_REQUEST);
   }
   const existing = await Category.findOne({ name: trimmedName, user: userId });
   if (existing) {
-    throw new AppError(MESSAGES.CATEGORY_NAME_EXISTS, HTTP_STATUS.BAD_REQUEST);
+    throw AppError(MESSAGES.CATEGORY_NAME_EXISTS, HTTP_STATUS.BAD_REQUEST);
   }
   return Category.create({
     user: userId,
@@ -56,22 +56,22 @@ async function create(userId, payload) {
 async function update(categoryId, userId, payload) {
   const category = await Category.findById(categoryId);
   if (!category) {
-    throw new AppError(MESSAGES.CATEGORY_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    throw AppError(MESSAGES.CATEGORY_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   if (category.user.toString() !== userId.toString()) {
-    throw new AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
+    throw AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
   }
 
   const { name, color } = payload;
   if (name !== undefined) {
     const trimmed = trimString(name);
-    if (!trimmed) throw new AppError(MESSAGES.CATEGORY_NAME_REQUIRED, HTTP_STATUS.BAD_REQUEST);
+    if (!trimmed) throw AppError(MESSAGES.CATEGORY_NAME_REQUIRED, HTTP_STATUS.BAD_REQUEST);
     const existing = await Category.findOne({
       name: trimmed,
       user: userId,
       _id: { $ne: categoryId },
     });
-    if (existing) throw new AppError(MESSAGES.CATEGORY_NAME_EXISTS, HTTP_STATUS.BAD_REQUEST);
+    if (existing) throw AppError(MESSAGES.CATEGORY_NAME_EXISTS, HTTP_STATUS.BAD_REQUEST);
     category.name = trimmed;
   }
   if (color !== undefined) category.color = color;
@@ -84,10 +84,10 @@ async function update(categoryId, userId, payload) {
 async function remove(categoryId, userId) {
   const category = await Category.findById(categoryId);
   if (!category) {
-    throw new AppError(MESSAGES.CATEGORY_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
+    throw AppError(MESSAGES.CATEGORY_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
   }
   if (category.user.toString() !== userId.toString()) {
-    throw new AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
+    throw AppError(MESSAGES.NOT_AUTHORIZED, HTTP_STATUS.UNAUTHORIZED);
   }
   await Todo.updateMany(
     { categories: category._id },

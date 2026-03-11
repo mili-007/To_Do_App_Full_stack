@@ -90,18 +90,9 @@ async function login({ email, password }) {
   };
 }
 
-/////// get profile API function
-async function getProfile(userId) {
-  const user = await User.findById(userId).select('-password');
-  if (!user) {
-    throw AppError(MESSAGES.USER_NOT_FOUND, HTTP_STATUS.NOT_FOUND);
-  }
-  return user;
-}
 
 module.exports = {
   register,
   login,
-  getProfile,
   generateToken,
 };

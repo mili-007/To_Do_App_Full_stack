@@ -32,17 +32,7 @@ const loginUser = async (req, res, next) => {
   }
 };
 
-const getUserProfile = async (req, res, next) => {
-  try {
-    const user = await authService.getProfile(req.user._id);
-    return apiResponse.success(res, user);
-  } catch (error) {
-    next(error);
-  }
-};
-
 module.exports = {
   registerUser,
-  loginUser,
-  getUserProfile,
+  loginUser
 };

@@ -29,7 +29,7 @@ const CategoriesPage = () => {
       .unwrap()
       .then(() => {
         setAddCategoryModalOpen(false);
-        toast.success('Category created');
+        // toast.success('Category created');
       })
       .catch((err: string) => toast.error(err || 'Failed to create category'))
       .finally(() => setIsCreatingCategory(false));

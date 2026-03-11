@@ -12,9 +12,7 @@ function errorHandler(err, req, res, next) {
 
   // statusCode and message
   if (err.name === 'AppError') {
-    const body = { message: err.message };
-    if (dev && err.stack) body.stack = err.stack;
-    return res.status(err.statusCode).json(body);
+    return res.status(err.statusCode).json({ message: err.message });
   }
 
   // JWT errors

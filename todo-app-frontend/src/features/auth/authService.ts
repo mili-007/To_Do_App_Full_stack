@@ -31,21 +31,11 @@ const logout = (): void => {
   localStorage.removeItem('user');
 };
 
-// Get user profile
-// const getProfile = async (token: string): Promise<User> => {
-//   const response = await axiosInstance.get<User>(`${API_URL}/profile`, {
-//     headers: {
-//       Authorization: `Bearer ${token}`
-//     }
-//   });
-//   return response.data;
-// };
 
 const authService = {
   register,
   login,
   logout,
-  // getProfile
 };
 
 export default authService;

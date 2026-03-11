@@ -45,7 +45,10 @@ const TodoDetailPage = () => {
   }
 
   const handleUpdate = (todoData: TodoDetailUpdatePayload) => {
-    dispatch(updateTodo({ id: selectedTodo._id, todoData }));
+    dispatch(updateTodo({ id: selectedTodo._id, todoData }))
+      .unwrap()
+      .then(() => toast.success('Todo updated'))
+      .catch((err: string) => toast.error(err || 'Failed to update todo'));
   };
 
   const handleDeleteConfirm = () => {

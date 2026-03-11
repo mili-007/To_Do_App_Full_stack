@@ -56,7 +56,7 @@ const Register = () => {
         title="Create Account"
         subtitle="Join us and start organizing your tasks"
       />
-      <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+      <form className="space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="space-y-4">
           <Controller
             name="name"

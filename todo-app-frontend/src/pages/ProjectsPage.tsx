@@ -29,7 +29,7 @@ const ProjectsPage = () => {
       .unwrap()
       .then(() => {
         setAddProjectModalOpen(false);
-        toast.success('Project created');
+        // toast.success('Project created');
       })
       .catch((err: string) => toast.error(err || 'Failed to create project'))
       .finally(() => setIsCreatingProject(false));

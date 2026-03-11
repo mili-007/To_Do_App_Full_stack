@@ -13,6 +13,7 @@ import Dropdown from '../ui/Dropdown';
 import Modal from '../ui/Modal';
 import ProjectForm from '../projects/ProjectForm';
 import { PRIORITY_OPTIONS } from '../../constants/todo';
+import { toast } from '../../utils/toast';
 
 const emptyDefaultValues: TodoFormData = {
   title: '',
@@ -76,8 +77,11 @@ const TodoForm = ({ initialTodo = null, onCancel, onSuccess, embedded = false }:
     if (isEdit && initialTodo) {
       dispatch(updateTodo({ id: initialTodo._id, todoData }))
         .unwrap()
-        .then(() => onSuccess?.())
-        .catch(() => {});
+        .then(() => {
+          toast.success('Todo updated');
+          onSuccess?.();
+        })
+        .catch((err: string) => toast.error(err || 'Failed to update todo'));
     } else {
       dispatch(createTodo(todoData))
         .unwrap()
